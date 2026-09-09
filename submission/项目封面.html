@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>财智通｜金融安全智能体</title>
+<style>
+:root{
+  --bg1:#FFFFFF;
+  --bg2:#F6FBF8;
+
+  --ink:#042116;
+  --green:#0A4029;
+  --green2:#157048;
+  --green3:#35A874;
+  --green4:#6CC79B;
+
+  --light:#D2F0E1;
+  --light2:#A5E0C3;
+  --light3:#EDFAF3;
+
+  --text:#3D554B;
+  --weak:#60766C;
+}
+
+/* 基础画布 */
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  width:1920px;
+  height:1080px;
+  overflow:hidden;
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+
+body{
+  background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
+  color:var(--ink);
+}
+
+/* 主画布 */
+.cover{
+  position:relative;
+  width:1920px;
+  height:1080px;
+  overflow:hidden;
+  padding:92px 120px;
+}
+
+/* 顶部赛事区域 */
+.header{
+  height:92px;
+  border-bottom:2px solid var(--light);
+  display:flex;
+  align-items:flex-start;
+}
+
+.event{
+  font-size:28px;
+  letter-spacing:2px;
+  font-weight:600;
+  color:var(--text);
+}
+
+.direction{
+  position:absolute;
+  top:198px;
+  left:120px;
+  font-size:25px;
+  letter-spacing:1px;
+  color:var(--weak);
+}
+
+/* 左侧主体文字区 */
+.content{
+  position:absolute;
+  left:120px;
+  top:296px;
+  width:1010px;
+}
+
+.title{
+  font-size:152px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:10px;
+  color:var(--ink);
+}
+
+.subtitle{
+  margin-top:28px;
+  font-size:42px;
+  font-weight:600;
+  letter-spacing:5px;
+  color:var(--green);
+}
+
+.slogan{
+  margin-top:58px;
+  font-size:52px;
+  line-height:1.35;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--ink);
+}
+
+/* 功能标签 */
+.features{
+  display:flex;
+  gap:22px;
+  margin-top:72px;
+}
+
+.tag{
+  height:62px;
+  padding:0 34px;
+  border-radius:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  letter-spacing:2px;
+  color:var(--green2);
+  border:2px solid var(--light2);
+  background:rgba(237,250,243,.65);
+}
+
+.tag.active{
+  background:var(--green);
+  border-color:var(--green);
+  color:#FFFFFF;
+}
+
+/* 英文装饰 */
+.en{
+  position:absolute;
+  left:120px;
+  top:252px;
+  font-size:18px;
+  font-weight:500;
+  letter-spacing:14px;
+  color:var(--green3);
+}
+
+/* 右侧主视觉 */
+.visual{
+  position:absolute;
+  right:120px;
+  top:240px;
+  width:650px;
+  height:650px;
+}
+
+svg{
+  width:100%;
+  height:100%;
+}
+
+/* 底部信息 */
+.footer{
+  position:absolute;
+  left:120px;
+  bottom:90px;
+  font-size:26px;
+  letter-spacing:2px;
+  color:var(--text);
+  line-height:1.8;
+}
+
+/* 免责声明 */
+.notice{
+  position:absolute;
+  right:120px;
+  bottom:70px;
+  width:760px;
+  text-align:right;
+  font-size:16px;
+  letter-spacing:1px;
+  color:var(--weak);
+}
+</style>
+</head>
+
+<body>
+<div class="cover">
+
+  <!-- 顶部赛事信息 -->
+  <div class="header">
+    <div class="event">北京大学「金融 AI 智能体创新大赛」</div>
+  </div>
+
+  <!-- 赛事方向 -->
+  <div class="direction">
+    方向三 · 金融 AI 智能体行业场景落地
+  </div>
+
+  <!-- 左侧核心信息 -->
+  <div class="content">
+    <div class="title">财智通</div>
+
+    <div class="subtitle">
+      金融安全智能体
+    </div>
+
+    <div class="slogan">
+      我们不保证你赚钱，但保证你不被骗。
+    </div>
+
+    <!-- 四个核心功能标签 -->
+    <div class="features">
+      <div class="tag active">识别与翻译</div>
+      <div class="tag">学习</div>
+      <div class="tag">规划师</div>
+      <div class="tag">我的档案</div>
+    </div>
+  </div>
+
+  <!-- 右侧抽象盾牌视觉 -->
+  <div class="visual">
+    <svg viewBox="0 0 650 650" fill="none">
+      <!-- 盾形轮廓 -->
+      <path
+        d="M325 70
+           C450 70 535 125 535 125
+           V285
+           C535 440 440 530 325 580
+           C210 530 115 440 115 285
+           V125
+           C115 125 200 70 325 70Z"
+        stroke="#A5E0C3"
+        stroke-width="5"
+      />
+
+      <!-- 内部透明层 -->
+      <path
+        d="M325 125
+           C420 125 480 165 480 165
+           V290
+           C480 395 420 455 325 500
+           C230 455 170 395 170 290
+           V165
+           C170 165 230 125 325 125Z"
+        stroke="#D2F0E1"
+        stroke-width="3"
+      />
+
+      <!-- 对勾 -->
+      <path
+        d="M235 325 L300 390 L425 250"
+        stroke="#6CC79B"
+        stroke-width="10"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </div>
+
+  <!-- 英文装饰 -->
+  <div class="en">
+    FINANCIAL SAFETY AGENT
+  </div>
+
+  <!-- 团队院校 -->
+  <div class="footer">
+    团队：树懒 · 小羊<br/>
+    北京大学经济学院
+  </div>
+
+  <!-- 免责声明 -->
+  <div class="notice">
+    投资者教育用途，不构成投资建议，不推荐任何具体股票、基金或理财产品。
+  </div>
+
+</div>
+</body>
+</html>

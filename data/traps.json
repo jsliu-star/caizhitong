@@ -1,0 +1,116 @@
+{
+  "_note": "按用户画像定向推送的骗局提醒。这是三个 Tab 联动的落地：规划师测出的画像，决定安全盾优先提示哪类陷阱。patternIds 对应违规话术特征库。",
+  "traps": [
+    {
+      "id": "t-high-yield",
+      "when": {
+        "riskTypes": [
+          "growth",
+          "aggressive"
+        ]
+      },
+      "title": "你这种风险偏好，最容易被「高收益」话术钓走",
+      "detail": "愿意承担风险的人，往往也更容易相信「高收益是风险换来的，我承担得起」。骗子正是利用这一点——他们承诺的不是高风险高收益，而是「高收益但没风险」。这两者在金融上不可能同时成立。",
+      "patternIds": [
+        "vp-expected-return",
+        "vp-guarantee-principal",
+        "vp-yield-outlier"
+      ]
+    },
+    {
+      "id": "t-leverage",
+      "when": {
+        "riskTypes": [
+          "aggressive"
+        ],
+        "experience": [
+          "stock",
+          "leverage"
+        ]
+      },
+      "title": "警惕配资与「带单」",
+      "detail": "有一定经验的投资者是荐股群和场外配资的主要目标——因为他们听得懂术语，也更容易被「专业感」说服。场外配资在我国属于违法，「老师带单」需要持牌，绝大多数都没有。",
+      "patternIds": [
+        "vp-stock-recommendation",
+        "vp-discretionary-trading",
+        "vp-identity-packaging"
+      ]
+    },
+    {
+      "id": "t-deposit-confusion",
+      "when": {
+        "riskTypes": [
+          "conservative",
+          "steady"
+        ]
+      },
+      "title": "你最该警惕的是「跟存款差不多」这句话",
+      "detail": "偏保守的人通常不会去追高收益，所以骗子的切入点不是「高收益」，而是「和存款一样安全但收益高一点」。这句话本身就是监管重点整治的误导销售。",
+      "patternIds": [
+        "vp-deposit-confusion",
+        "vp-guarantee-principal"
+      ]
+    },
+    {
+      "id": "t-elder",
+      "when": {
+        "ageBands": [
+          "51-60",
+          "60+"
+        ]
+      },
+      "title": "熟人推荐和上门推销，比广告更危险",
+      "detail": "针对中老年人的骗局很少通过广告投放，而是通过邻居、老同事、社区活动、免费体检和赠送礼品建立信任，再引导投资。特征是：要求保密、不让告诉子女、催促尽快转账。",
+      "patternIds": [
+        "vp-emotional-manipulation",
+        "vp-private-traffic",
+        "vp-illegal-fundraising-targets"
+      ]
+    },
+    {
+      "id": "t-student",
+      "when": {
+        "ageBands": [
+          "18-25"
+        ]
+      },
+      "title": "校园里的三类坑：网贷、刷单、虚拟币",
+      "detail": "以「兼职」「返利」「校园代理」为名的模式，本质是让你先垫资或先借款。一旦开始，就很难只损失一次。虚拟货币相关业务活动在境内属于非法金融活动。",
+      "patternIds": [
+        "vp-pyramid-compensation",
+        "vp-illegal-fundraising-targets",
+        "vp-fund-pool"
+      ]
+    },
+    {
+      "id": "t-no-emergency",
+      "when": {
+        "emergency": [
+          "none",
+          "lt3"
+        ]
+      },
+      "title": "没有应急金的人，最容易被「随时可取的高收益」骗",
+      "detail": "手头紧又想要收益，会让「T+0 到账、日返、随存随取还给高息」这类话术格外有吸引力。但收益、流动性、安全性三者不可能同时最优——同时承诺这三样的，一定有一样是假的。",
+      "patternIds": [
+        "vp-fund-pool",
+        "vp-expected-return"
+      ]
+    },
+    {
+      "id": "t-debt",
+      "when": {
+        "debt": [
+          "high",
+          "unknown"
+        ]
+      },
+      "title": "有负债的人，是「以贷养贷」骗局的首要目标",
+      "detail": "以「债务优化」「征信修复」「低息置换」为名收取手续费，或诱导你借新还旧，最终把小额债务放大成无法偿还的规模。合法的债务处理不会先收费。",
+      "patternIds": [
+        "vp-private-traffic",
+        "vp-unverifiable-license"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>财智通 · 项目封面</title>
+<style>
+  :root{
+    --brand-950:#042116;--brand-900:#06301f;--brand-800:#0a4029;--brand-700:#0f5537;
+    --brand-600:#157048;--brand-500:#1d8b5b;--brand-400:#35a874;--brand-300:#6cc79b;
+    --brand-200:#a5e0c3;--brand-100:#d2f0e1;--brand-50:#edfaf3;
+    --ink:#0d1f18;--ink-soft:#3d554b;--ink-mute:#60766c;--line:#b3d2c3;--paper:#fff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1920px;height:1080px}
+  body{font-family:"PingFang SC","Hiragino Sans GB",-apple-system,sans-serif;color:var(--ink);
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  .page{position:relative;width:1920px;height:1080px;overflow:hidden;
+    background:
+      radial-gradient(1100px 820px at 78% 12%, #f1fbf6 0%, rgba(241,251,246,0) 64%),
+      radial-gradient(760px 520px at 2% 100%, #f4fbf7 0%, rgba(244,251,247,0) 62%),
+      var(--paper)}
+
+  /* 右侧大幅盾形，浅绿描边，作画面重心而非文字 */
+  .art{position:absolute;right:150px;top:196px;width:600px;height:682px}
+
+  .inner{position:relative;width:100%;height:100%;padding:76px 112px 72px;display:flex;flex-direction:column}
+
+  .top{display:flex;align-items:center;justify-content:space-between}
+  .top .race{display:flex;align-items:center;gap:16px}
+  .top .em{width:30px;height:30px;border-radius:9px;background:var(--brand-800);color:var(--brand-100);
+    display:grid;place-items:center;font-size:16px;font-weight:700}
+  .top .race p{font-size:20px;letter-spacing:.05em;color:var(--brand-900);font-weight:500}
+  .top .dir{font-size:16px;letter-spacing:.05em;color:var(--brand-700);
+    border:1px solid var(--brand-200);border-radius:999px;padding:9px 20px}
+  .hair{height:1px;background:linear-gradient(to right,var(--brand-300),rgba(179,210,195,.15) 62%,rgba(179,210,195,0));margin-top:26px}
+
+  .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:30px}
+  .en{font-size:15px;letter-spacing:.5em;color:var(--brand-400);text-transform:uppercase}
+  h1{font-size:224px;line-height:1;font-weight:700;letter-spacing:.1em;color:var(--brand-950);margin:30px 0 0 -8px}
+  .role{display:flex;align-items:center;gap:26px;margin-top:34px}
+  .role .bar{width:74px;height:2px;background:var(--brand-600)}
+  .role .k{font-size:33px;font-weight:500;letter-spacing:.3em;color:var(--brand-700)}
+  .slogan{margin-top:52px;font-size:52px;font-weight:600;letter-spacing:.02em;color:var(--brand-900)}
+  .slogan em{font-style:normal;color:var(--brand-600);
+    background:linear-gradient(to top,var(--brand-100) 0,var(--brand-100) 14px,transparent 14px);padding:0 3px}
+
+  .tabs{display:flex;align-items:center;gap:15px;margin-top:60px}
+  .tab{font-size:20px;letter-spacing:.06em;color:var(--brand-800);background:var(--brand-50);
+    border:1px solid var(--brand-200);border-radius:999px;padding:12px 26px}
+  .tab.on{background:var(--brand-800);border-color:var(--brand-800);color:#fff;font-weight:500}
+
+  .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:40px}
+  .meta{display:flex;flex-direction:column;gap:15px}
+  .row{display:flex;align-items:center;gap:18px}
+  .row .lb{font-size:16px;letter-spacing:.22em;color:var(--ink-mute);width:92px}
+  .row .vl{font-size:23px;font-weight:600;letter-spacing:.08em;color:var(--brand-900)}
+  .row .vl.n{font-weight:500;font-size:21px;color:var(--ink-soft);letter-spacing:.05em}
+  .row .vl b{font-weight:600;color:var(--brand-900)}
+  .disc{font-size:14px;color:var(--ink-mute);letter-spacing:.03em;text-align:right;line-height:1.7}
+</style></head>
+<body>
+<div class="page">
+  <svg class="art" viewBox="0 0 330 375" fill="none" aria-hidden="true">
+    <path d="M165 6 318 62v144c0 100-67 158-153 179C79 364 12 306 12 206V62L165 6Z" fill="#f7fdfa" stroke="#d2f0e1" stroke-width="1.5"/>
+    <path d="M165 44 280 86v120c0 80-53 127-115 144-62-17-115-64-115-144V86L165 44Z" stroke="#dcf3e8" stroke-width="1.3"/>
+    <path d="M112 196l40 40 72-92" stroke="#8fd8b7" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M165 6 318 62v144c0 100-67 158-153 179" stroke="#6cc79b" stroke-width="1.6"/>
+  </svg>
+
+  <div class="inner">
+    <div class="top">
+      <div class="race"><div class="em">财</div><p>北京大学「金融 AI 智能体创新大赛」</p></div>
+      <div class="dir">方向三 · 金融 AI 智能体行业场景落地</div>
+    </div>
+    <div class="hair"></div>
+
+    <div class="hero">
+      <div class="en">Financial Safety Agent</div>
+      <h1>财智通</h1>
+      <div class="role"><span class="bar"></span><span class="k">金融安全智能体</span></div>
+      <div class="slogan">我们不保证你赚钱，但保证你<em>不被骗</em>。</div>
+      <div class="tabs">
+        <div class="tab on">识别与翻译</div>
+        <div class="tab">学习</div>
+        <div class="tab">规划师</div>
+        <div class="tab">我的档案</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div class="meta">
+        <div class="row"><span class="lb">团队</span><span class="vl">树懒 · 小羊</span></div>
+        <div class="row"><span class="lb">院校</span><span class="vl n">北京大学经济学院</span></div>
+      </div>
+      <div class="disc">投资者教育用途，不构成投资建议，<br>不推荐任何具体股票、基金或理财产品。</div>
+    </div>
+  </div>
+</div>
+</body></html>

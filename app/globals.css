@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+/* ── 财智通配色：深绿 / 浅绿 ─────────────────────────── */
+:root {
+  /* 字号倍数。只被 font-size 引用，所以放大只影响文字，不影响间距、按钮尺寸和图表几何。
+     由 components/ui/FontScale.tsx 写在 <html> 的行内样式上。 */
+  --fs: 1;
+
+  --brand-950: #042116;
+  --brand-900: #06301f;
+  --brand-800: #0a4029;
+  --brand-700: #0f5537;
+  --brand-600: #157048;
+  --brand-500: #1d8b5b;
+  --brand-400: #35a874;
+  --brand-300: #6cc79b;
+  --brand-200: #a5e0c3;
+  --brand-100: #d2f0e1;
+  --brand-50: #edfaf3;
+
+  --ink: #0d1f18;
+  --ink-soft: #3d554b;
+  /* 4.88:1(白) / 4.66:1(paper-soft) / 4.55:1(brand-50) —— 它承载免责声明、法规要义、
+     引文与页脚，是最需要被看清的字。原值 #6b8378 只有 3.81–4.08:1，不达 WCAG AA。 */
+  --ink-mute: #60766c;
+  /* 原值 #d8e8e0 对白底仅 1.27:1，卡片边界肉眼分不出来 —— 这是「全站文字过密」观感的一个来源 */
+  --line: #b3d2c3;
+  --paper: #ffffff;
+  --paper-soft: #f6fbf8;
+
+  /* 图表分类色：固定顺序，不循环。经 dataviz 验证器五项检查全部通过
+     （亮度带 / 色度下限 / CVD 分离 / 常视力分离 / 对比度）。
+     tritan 分离度偏低，因此所有使用处必须配直接标签作二次编码。 */
+  --cat-1: #1d8b5b;
+  --cat-2: #2563eb;
+  --cat-3: #d97706;
+  --cat-4: #9333ea;
+  --cat-5: #0891b2;
+  --grid: #e6efea;
+
+  /* 风险语义色：安全沿用品牌深绿，避免与品牌色冲突 */
+  --risk-red: #b3261e;
+  --risk-red-bg: #fdeceb;
+  --risk-red-line: #f3c4c1;
+  --risk-amber: #96600a;
+  --risk-amber-bg: #fff6e5;
+  --risk-amber-line: #f0dcb4;
+  --risk-green: var(--brand-700);
+  --risk-green-bg: var(--brand-50);
+  --risk-green-line: var(--brand-200);
+}
+
+@theme inline {
+  --color-brand-950: var(--brand-950);
+  --color-brand-900: var(--brand-900);
+  --color-brand-800: var(--brand-800);
+  --color-brand-700: var(--brand-700);
+  --color-brand-600: var(--brand-600);
+  --color-brand-500: var(--brand-500);
+  --color-brand-400: var(--brand-400);
+  --color-brand-300: var(--brand-300);
+  --color-brand-200: var(--brand-200);
+  --color-brand-100: var(--brand-100);
+  --color-brand-50: var(--brand-50);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-mute: var(--ink-mute);
+  --color-line: var(--line);
+  --color-paper: var(--paper);
+  --color-paper-soft: var(--paper-soft);
+
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-cat-4: var(--cat-4);
+  --color-cat-5: var(--cat-5);
+  --color-grid: var(--grid);
+
+  --color-risk-red: var(--risk-red);
+  --color-risk-red-bg: var(--risk-red-bg);
+  --color-risk-red-line: var(--risk-red-line);
+  --color-risk-amber: var(--risk-amber);
+  --color-risk-amber-bg: var(--risk-amber-bg);
+  --color-risk-amber-line: var(--risk-amber-line);
+  --color-risk-green: var(--risk-green);
+  --color-risk-green-bg: var(--risk-green-bg);
+  --color-risk-green-line: var(--risk-green-line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper-soft);
+  color: var(--ink);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Source Han Sans SC", "Noto Sans CJK SC", "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: "tnum" on;
+  font-size: calc(15px * var(--fs));
+}
+
+/*
+ * 老年人友好：只放大文字。
+ *
+ * 曾经用 body { zoom }，但那是整页缩放——按钮、卡片内边距、图表一起变大，
+ * 等于浏览器缩放，屏幕上能看到的信息反而更少。
+ *
+ * 现在全站写死的字号都写成 text-[length:calc(13px*var(--fs))]，
+ * 乘的就是下面这个变量；间距（Tailwind 的 rem 尺度）和 SVG 图表的几何都不引用它，
+ * 所以放大只让字变大，版式不动。
+ *
+ * 字号变大后行高靠 leading-* 的倍数值自己跟上；没写字号的文本走 body 的 calc。
+ */
+
+/* 兼容旧的布尔开关：只在没有 --fs 行内值时兜底（老书签、SSR 首帧） */
+body[data-large="1"] {
+  --fs: 1.18;
+}
+
+/* 目录锚点跳转：留出吸顶导航的高度，否则小节标题会被盖住。
+   导航在大字号下会折成两行，所以留得比一行的 61px 宽裕些。 */
+[data-outline] {
+  scroll-margin-top: 7.5rem;
+}
+
+@keyframes cd-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.cd-in {
+  animation: cd-fade-up 0.28s ease-out both;
+}
+
+@keyframes cd-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.cd-pulse {
+  animation: cd-pulse 1.1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-in, .cd-pulse { animation: none; }
+}

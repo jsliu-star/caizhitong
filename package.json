@@ -1,0 +1,33 @@
+{
+  "name": "caizhitong",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test:rules": "tsx tests/rules.test.ts",
+    "test:finance": "tsx tests/finance.test.ts",
+    "test": "npm run test:rules && npm run test:semantic && npm run test:guard && npm run test:finance && npm run test:plan && npm run test:quiz && npm run test:advisor",
+    "test:guard": "tsx tests/guard.test.ts",
+    "test:quiz": "tsx tests/quiz.test.ts",
+    "test:advisor": "tsx tests/advisor.test.ts",
+    "test:plan": "tsx tests/plan.test.ts",
+    "test:semantic": "tsx tests/semantic.test.ts"
+  },
+  "dependencies": {
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "puppeteer-core": "^25.10.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5"
+  }
+}

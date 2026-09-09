@@ -1,0 +1,43 @@
+{
+  "_note": "市场基准数据快照。以每个字段自带的 verified/source/sourceUrl 为准（顶层 verified 仅表示三项是否全部填齐）。value 为 null 时 lib/rules/match.ts 自动改用定性表述（『当前银行存款与货币基金的常见收益水平』），不会展示空值。核对记录见 docs/legal-check.md。",
+  "verified": false,
+  "items": {
+    "riskFreeRate": {
+      "label": "10 年期国债收益率",
+      "value": 1.68,
+      "unit": "%",
+      "date": "2026-09-07",
+      "source": "中国债券信息网（ChinaBond）·「财政部—中国国债收益率曲线」当日到期收益率，期限 10 年；主办单位：中华人民共和国财政部",
+      "sourceUrl": "https://yield.chinabond.com.cn/cbweb-czb-web/czb/moreInfo?locale=cn_ZH&nameType=1",
+      "verified": true,
+      "why": "市场的无风险利率锚——一切收益承诺的标尺"
+    },
+    "moneyFundYield": {
+      "label": "货币基金 7 日年化（代表性水平）",
+      "value": null,
+      "unit": "%",
+      "date": null,
+      "source": null,
+      "sourceUrl": null,
+      "verified": false,
+      "why": "活钱能拿到的现实收益水平",
+      "tbdReason": "官方渠道未发布「代表性水平」这一口径的统计值；单只基金的 7 日年化不能代表全市场，取值方法本身需要人工确定。故保持 null，前端自动改用定性表述。若答辩需要，建议改为引用一只公开披露的大型货币基金并明确标注基金名称与日期，而不是给一个无出处的『行业平均』。"
+    },
+    "csi300PE": {
+      "label": "沪深300 市盈率（PE-TTM）",
+      "value": null,
+      "unit": "倍",
+      "date": null,
+      "source": null,
+      "sourceUrl": null,
+      "verified": false,
+      "why": "权益市场当前贵不贵的客观参考",
+      "tbdReason": "中证指数官网（csindex.com.cn）的指数估值数据由前端异步加载，公开接口 /csindex-home/index-list/query-index-item 只返回最新收盘点位（本次查得 4575.02）与月度涨跌，不含市盈率；估值 xls 下载地址返回 AccessDenied。未能从官方来源读到 PE-TTM 数值，因此不填。人工可在中证指数官网『指数估值』页面查看后补录，需同时记录数据日期。"
+    }
+  },
+  "yieldOutlier": {
+    "_note": "收益率异常阈值。riskFreeRate 已填入真实值（2026-09-07：1.68%），下列阈值仍作为独立的硬阈值使用，不随市场数据变动。",
+    "suspiciousAnnualPct": 6,
+    "severeAnnualPct": 12
+  }
+}

@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1920" viewBox="0 0 1920 1920">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#042116"/>
+      <stop offset="55%" stop-color="#06301f"/>
+      <stop offset="100%" stop-color="#0a4029"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1d8b5b"/>
+      <stop offset="100%" stop-color="#157048" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1920" fill="url(#bg)"/>
+
+  <!-- 16:9 内容带：y 420..1500 -->
+  <g transform="translate(0,420)">
+
+    <!-- 水印盾形 -->
+    <g opacity="0.07" transform="translate(1258,150) scale(2.9)">
+      <path d="M100 8 L188 44 V128 C188 186 148 232 100 250 C52 232 12 186 12 128 V44 Z"
+            fill="none" stroke="#1d8b5b" stroke-width="7"/>
+      <path d="M56 130 L88 164 L150 96" fill="none" stroke="#1d8b5b" stroke-width="9"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- 左侧主信息 -->
+    <g transform="translate(120,150)">
+      <text x="0" y="0" font-family="PingFang SC, Heiti SC, sans-serif" font-size="26"
+            fill="#4fae82" letter-spacing="4">北京大学金融 AI 智能体创新大赛 · 方向三</text>
+
+      <text x="-4" y="122" font-family="PingFang SC, Heiti SC, sans-serif" font-size="118"
+            font-weight="700" fill="#edfaf3" letter-spacing="2">财智通</text>
+
+      <rect x="0" y="166" width="120" height="6" rx="3" fill="url(#accent)"/>
+
+      <text x="0" y="248" font-family="PingFang SC, Heiti SC, sans-serif" font-size="46"
+            font-weight="600" fill="#d3f0e1">我们不保证你赚钱，但保证你不被骗。</text>
+
+      <text x="2" y="306" font-family="PingFang SC, Heiti SC, sans-serif" font-size="27"
+            fill="#8fcfb0">面向理财小白与易受骗人群的金融安全智能体</text>
+
+      <!-- 三步价值主张 -->
+      <g transform="translate(0,372)">
+        <g>
+          <rect x="0" y="0" width="182" height="76" rx="14" fill="#0f5537" stroke="#1d8b5b" stroke-width="2"/>
+          <text x="91" y="49" text-anchor="middle" font-family="PingFang SC, Heiti SC, sans-serif"
+                font-size="29" font-weight="600" fill="#edfaf3">先别被骗</text>
+        </g>
+        <text x="204" y="49" font-family="PingFang SC, sans-serif" font-size="30" fill="#4fae82">→</text>
+        <g transform="translate(244,0)">
+          <rect x="0" y="0" width="182" height="76" rx="14" fill="#0a4029" stroke="#157048" stroke-width="2"/>
+          <text x="91" y="49" text-anchor="middle" font-family="PingFang SC, Heiti SC, sans-serif"
+                font-size="29" font-weight="600" fill="#d3f0e1">再看得懂</text>
+        </g>
+        <text x="448" y="49" font-family="PingFang SC, sans-serif" font-size="30" fill="#4fae82">→</text>
+        <g transform="translate(488,0)">
+          <rect x="0" y="0" width="182" height="76" rx="14" fill="#0a4029" stroke="#157048" stroke-width="2"/>
+          <text x="91" y="49" text-anchor="middle" font-family="PingFang SC, Heiti SC, sans-serif"
+                font-size="29" font-weight="600" fill="#d3f0e1">才敢规划</text>
+        </g>
+        <text x="0" y="126" font-family="PingFang SC, Heiti SC, sans-serif" font-size="24"
+              fill="#4fae82">这个顺序就是我们的主张：防骗放在最前面</text>
+      </g>
+    </g>
+
+    <!-- 右侧报告卡（手绘阴影，不用滤镜） -->
+    <g transform="translate(1136,158)">
+      <rect x="6" y="14" width="648" height="726" rx="24" fill="#021410" opacity="0.45"/>
+      <rect x="0" y="0" width="648" height="726" rx="24" fill="#ffffff"/>
+
+      <text x="40" y="56" font-family="PingFang SC, Heiti SC, sans-serif" font-size="23" fill="#60766c">风险体检报告</text>
+
+      <rect x="40" y="80" width="150" height="50" rx="12" fill="#fdeceb" stroke="#f3c4c1" stroke-width="2"/>
+      <circle cx="67" cy="105" r="9" fill="#b3261e"/>
+      <text x="86" y="114" font-family="PingFang SC, Heiti SC, sans-serif" font-size="26"
+            font-weight="600" fill="#b3261e">高风险</text>
+
+      <text x="40" y="184" font-family="PingFang SC, Heiti SC, sans-serif" font-size="29"
+            font-weight="600" fill="#0d1f18">命中 4 项监管明令禁止的表述特征</text>
+
+      <g font-family="PingFang SC, Heiti SC, sans-serif">
+        <rect x="40" y="216" width="4" height="44" rx="2" fill="#b3261e"/>
+        <text x="60" y="238" font-size="24" fill="#0d1f18">保本保息</text>
+        <text x="60" y="268" font-size="20" fill="#60766c">承诺或暗示保本保收益</text>
+
+        <rect x="40" y="298" width="4" height="44" rx="2" fill="#b3261e"/>
+        <text x="60" y="320" font-size="24" fill="#0d1f18">年化 18%</text>
+        <text x="60" y="350" font-size="20" fill="#60766c">对比 10 年期国债 1.68%（2026-09-07）</text>
+
+        <rect x="40" y="380" width="4" height="44" rx="2" fill="#b3261e"/>
+        <text x="60" y="402" font-size="24" fill="#0d1f18">国资背景</text>
+        <text x="60" y="432" font-size="20" fill="#60766c">资质表述无法核验</text>
+
+        <rect x="40" y="462" width="4" height="44" rx="2" fill="#96600a"/>
+        <text x="60" y="484" font-size="24" fill="#0d1f18">名额有限</text>
+        <text x="60" y="514" font-size="20" fill="#60766c">制造紧迫感、压缩决策时间</text>
+      </g>
+
+      <line x1="40" y1="556" x2="608" y2="556" stroke="#e3ece7" stroke-width="2"/>
+
+      <text x="40" y="596" font-family="PingFang SC, Heiti SC, sans-serif" font-size="21" fill="#3d554b">
+        法规依据：《广告法》第二十五条 · 原文已核对
+      </text>
+      <text x="40" y="632" font-family="PingFang SC, Heiti SC, sans-serif" font-size="20" fill="#60766c">
+        我们只能检查它说了什么，检查不了它实际做什么
+      </text>
+      <text x="40" y="676" font-family="PingFang SC, Heiti SC, sans-serif" font-size="17" fill="#8a9c93">
+        不构成投资建议，亦不构成对任何机构
+      </text>
+      <text x="40" y="700" font-family="PingFang SC, Heiti SC, sans-serif" font-size="17" fill="#8a9c93">
+        或产品的法律定性
+      </text>
+    </g>
+
+    <!-- 底部能力条 -->
+    <g transform="translate(120,986)" font-family="PingFang SC, Heiti SC, sans-serif">
+      <text x="0" y="0" font-size="23" fill="#8fcfb0">判定归规则，转述归模型</text>
+      <circle cx="270" cy="-8" r="4" fill="#1d8b5b"/>
+      <text x="292" y="0" font-size="23" fill="#8fcfb0">15 类违规话术特征 / 365 关键词</text>
+      <circle cx="672" cy="-8" r="4" fill="#1d8b5b"/>
+      <text x="694" y="0" font-size="23" fill="#8fcfb0">14 条法规逐条核对原文</text>
+      <circle cx="978" cy="-8" r="4" fill="#1d8b5b"/>
+      <text x="1000" y="0" font-size="23" fill="#8fcfb0">规则 + 语义双通道</text>
+      <circle cx="1240" cy="-8" r="4" fill="#1d8b5b"/>
+      <text x="1262" y="0" font-size="23" fill="#8fcfb0">输出审查层</text>
+    </g>
+  </g>
+</svg>

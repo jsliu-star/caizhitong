@@ -1,0 +1,7 @@
+# 部署时不需要上传的内容（减小上传体积、避免泄露）
+.env
+.env.*
+docs/
+tests/
+*.log
+.DS_Store
