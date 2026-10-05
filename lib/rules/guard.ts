@@ -40,6 +40,7 @@ const REWRITE: Array<[RegExp, string]> = [
  * 模型自己说「稳赚」才是越界。
  */
 const PROMISE_WORDS = ["白赚", "净赚", "躺赚", "稳赚", "包赚", "准赚", "轻松赚", "闭眼赚"];
+const WARN_LEAD = /(像|号称|所谓|不是|没有|哪有|哪来|不存在|别信|不要信|不可能|不会有|什么)$/;
 const QUOTE_CHARS = new Set(["「", "」", "“", "”", '"', "'", "『", "』", "《", "》"]);
 
 function stripPromiseWords(input: string): { text: string; hits: string[] } {
@@ -53,7 +54,10 @@ function stripPromiseWords(input: string): { text: string; hits: string[] } {
       const before = text[i - 1] ?? "";
       const after = text[i + w.length] ?? "";
       // 前后紧邻引号 → 视为引用原文，放行
-      if (QUOTE_CHARS.has(before) || QUOTE_CHARS.has(after)) {
+      // 前面是比喻 / 转述 / 否定（「听着像稳赚」「号称稳赚」「没有稳赚不赔的事」）→ 是在提醒，放行
+      // 复赛个性化评测中发现：这类提醒句被改成「听着像（此处原有…已移除）」，用户读不通
+      const lead = text.slice(Math.max(0, i - 4), i);
+      if (QUOTE_CHARS.has(before) || QUOTE_CHARS.has(after) || WARN_LEAD.test(lead)) {
         from = i + w.length;
         continue;
       }
@@ -136,4 +140,14 @@ export function guardOutput(
     inventedNumbers,
     shouldFallback: violations.length >= 4 || inventedNumbers.length > 0,
   };
+}
+
+/**
+ * 给用户看的版本：去掉审查层改写过的整句，而不是把「（此处原有…已移除）」塞在句子中间。
+ * 占位说明对审查日志有用，对用户是一句读不通的话。去掉后剩得太少，调用方应回退模板。
+ */
+export function dropRedacted(text: string): { text: string; dropped: number } {
+  const parts = text.split(/(?<=[。！？!?\n])/);
+  const kept = parts.filter((p) => !p.includes("（此处原有") && !p.includes("【代码已隐去】"));
+  return { text: kept.join("").replace(/\n{3,}/g, "\n\n").trim(), dropped: parts.length - kept.length };
 }

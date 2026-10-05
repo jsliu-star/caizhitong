@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import samplesData from "@/data/samples.json";
 import { CheckReport } from "@/components/check/CheckReport";
 import { PageShell } from "@/components/ui/PageShell";
+import { Icon } from "@/components/ui/Icon";
+import { isAbort, streamSSE } from "@/lib/sse";
+import { PENDING_CHECK_EVENT, PENDING_CHECK_KEY } from "@/components/assistant/Assistant";
+import { BrandHero } from "@/components/home/BrandHero";
 import { Progress, STAGES, type StageKey, type StageStatus } from "@/components/check/Progress";
 import { personalizeReport, type PersonalNote } from "@/lib/shield/personalize";
 import {
@@ -17,6 +21,7 @@ import {
 import { findTerms } from "@/lib/rules/glossary";
 import { HowItWorks, SampleCases, TermCards, TermChips, type SampleCard } from "@/components/home/Guide";
 import type { CheckMode, ShieldEvent, ShieldReport } from "@/lib/types";
+import { mascotSay } from "@/components/assistant/lines";
 
 const SAMPLES = samplesData.samples as Array<{
   id: string;
@@ -78,6 +83,9 @@ export default function CheckPage() {
   const [analyzed, setAnalyzed] = useState("");
   const [supplements, setSupplements] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  // 离开页面时取消进行中的体检
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
     setProfile(loadProfile());
@@ -95,8 +103,38 @@ export default function CheckPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 小通助手把一段话交过来做完整体检：别的页面过来时读 sessionStorage，人已在首页时听事件
+  useEffect(() => {
+    const take = () => {
+      let pending: string | null = null;
+      try {
+        pending = window.sessionStorage.getItem(PENDING_CHECK_KEY);
+        window.sessionStorage.removeItem(PENDING_CHECK_KEY);
+      } catch {
+        /* 隐私模式 */
+      }
+      if (!pending) return;
+      setText(pending);
+      setPreview(null);
+      document.getElementById("丢进来")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      void run({ kind: "text", text: pending }, "risk");
+    };
+    take();
+    window.addEventListener(PENDING_CHECK_EVENT, take);
+    return () => window.removeEventListener(PENDING_CHECK_EVENT, take);
+    // run 的依赖是 []，引用稳定
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const run = useCallback(
-    async (payload: { kind: "text"; text: string } | { kind: "image"; imageDataUrl: string }, m: CheckMode) => {
+    async (
+      payload: { kind: "text"; text: string } | { kind: "image"; imageDataUrl: string; sampleId?: string },
+      m: CheckMode,
+    ) => {
+      // 新的一次体检开始前，取消上一次还没跑完的——否则后到的旧结果会盖掉新结果
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
       setRunning(true);
       setReport(null);
       setError(null);
@@ -110,26 +148,9 @@ export default function CheckPage() {
       const setStage = (k: StageKey, s: StageStatus) => setStatus((p) => ({ ...p, [k]: s }));
 
       try {
-        const res = await fetch("/api/shield", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, mode: m }),
-        });
-        if (!res.ok || !res.body) throw new Error(`请求失败（${res.status}）`);
-        const reader = res.body.getReader();
-        const dec = new TextDecoder();
-        let buf = "";
-
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, { stream: true });
-          const chunks = buf.split("\n\n");
-          buf = chunks.pop() ?? "";
-          for (const chunk of chunks) {
-            const line = chunk.split("\n").find((l) => l.startsWith("data:"));
-            if (!line) continue;
-            const ev = JSON.parse(line.slice(5).trim()) as ShieldEvent;
+        await streamSSE<ShieldEvent>("/api/shield", { ...payload, mode: m }, {
+          signal: ctrl.signal,
+          onEvent: (ev) => {
 
             switch (ev.stage) {
               case "vision":
@@ -190,6 +211,18 @@ export default function CheckPage() {
                 break;
               case "report":
                 setReport(ev.report);
+                // 小通按结论换个表情冒一句。措辞和报告一致：只说命中了什么，不下「诈骗 / 安全」的定性
+                mascotSay(
+                  ev.report.mode !== "risk"
+                    ? { mood: "happy", text: "翻好了，先看看人话版。" }
+                    : ev.report.genre?.kind === "report" && ev.report.verdict.headline.includes("讲骗局")
+                      ? { mood: "look", text: "这是一段讲骗局的文字。里面引用的说法，正好可以记一记。" }
+                    : ev.report.verdict.level === "red"
+                      ? { mood: "worry", text: "命中了好几条监管明令禁止的表述特征。慢慢看，别着急做决定。" }
+                      : ev.report.verdict.level === "yellow"
+                        ? { mood: "look", text: "有几处要留意，往下看看是哪几句。" }
+                        : { mood: "happy", text: "规则没识别到违规表述特征。不过我只能检查它说了什么。" },
+                );
                 try {
                   setNotes(personalizeReport(ev.report, loadProfile()));
                 } catch {
@@ -209,12 +242,16 @@ export default function CheckPage() {
                 setError(ev.message);
                 break;
             }
-          }
-        }
+          },
+        });
       } catch (e) {
+        if (isAbort(e)) return; // 被新的一次体检或离开页面取消，不算出错
         setError(e instanceof Error ? e.message : "分析失败");
       } finally {
-        setRunning(false);
+        if (abortRef.current === ctrl) {
+          abortRef.current = null;
+          setRunning(false);
+        }
       }
     },
     [],
@@ -246,7 +283,8 @@ export default function CheckPage() {
       const dataUrl = await fileToDataUrl(new File([blob], "s.png", { type: blob.type }));
       setPreview(dataUrl);
       setSupplements([]);
-      await run({ kind: "image", imageDataUrl: dataUrl }, m);
+      // sampleId 让服务端命中预生成快照：同一个演示案例，每次都是同一个结论
+      await run({ kind: "image", imageDataUrl: dataUrl, sampleId: url }, m);
     } catch (e) {
       setError(e instanceof Error ? e.message : "载入失败");
     }
@@ -267,11 +305,13 @@ export default function CheckPage() {
 
   return (
     <PageShell title="识别与翻译">
-      <header>
+      <BrandHero />
+
+      {/* 副标题原来写「截图或文字丢进来，先翻成人话，再看有没有风险」，
+          和下面 HowItWorks 的三步说的是同一件事，只是更粗。品牌区加进来之后
+          就成了第三层重复，把输入框压到 550px 以下——删掉，让工具早点出现。 */}
+      <header className="mt-6">
         <h1 className="text-[length:calc(26px*var(--fs))] font-bold tracking-tight text-brand-950 sm:text-[length:calc(32px*var(--fs))]">识别与翻译</h1>
-        <p className="mt-2 text-[length:calc(15px*var(--fs))] text-ink-soft">
-          截图或文字丢进来，先翻成人话，再看有没有风险。
-        </p>
       </header>
 
       {(profile.riskType || profile.encountered.length > 0) && (
@@ -284,13 +324,13 @@ export default function CheckPage() {
 
       <HowItWorks />
 
-      <section data-outline="丢进来" className="mt-5 rounded-2xl border border-line bg-paper p-5">
+      <section data-outline="丢进来" className="mt-5 rounded-2xl border border-line bg-paper p-5 shadow-raised sm:p-6">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={4}
           placeholder="粘贴广告文案、群里转来的话、或产品说明书条款"
-          className="w-full resize-y rounded-xl border border-line bg-paper-soft p-4 text-[length:calc(15px*var(--fs))] leading-relaxed text-ink outline-none transition placeholder:text-ink-mute/70 focus-visible:border-brand-600 focus-visible:ring-2 focus-visible:ring-brand-300"
+          className="w-full resize-y rounded-xl border border-line bg-paper-soft p-4 focus-visible:bg-paper text-[length:calc(15px*var(--fs))] leading-relaxed text-ink outline-none transition placeholder:text-ink-mute/70 focus-visible:border-brand-600 focus-visible:ring-2 focus-visible:ring-brand-300"
         />
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -300,10 +340,11 @@ export default function CheckPage() {
             onClick={() => run({ kind: "text", text: trimmed }, "risk")}
             className={
               riskLeads
-                ? "min-h-10 rounded-xl bg-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 disabled:bg-brand-200"
-                : "min-h-10 rounded-xl border border-line bg-paper-soft px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-ink-mute"
+                ? "inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-b from-brand-700 to-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand shadow-card ring-1 ring-brand-900/20 transition hover:from-brand-800 hover:to-brand-900 hover:shadow-raised disabled:cursor-not-allowed disabled:from-brand-100 disabled:to-brand-100 disabled:text-brand-600 disabled:shadow-none disabled:ring-brand-200"
+                : "inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-paper-soft px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-ink-mute transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
             }
           >
+            <Icon name={running && mode === "risk" ? "sparkles" : "shieldCheck"} className={`h-[1.1em] w-[1.1em] ${running && mode === "risk" ? "cd-pulse" : ""}`} />
             {running && mode === "risk" ? "分析中" : "翻译 + 风险体检"}
           </button>
           <button
@@ -312,8 +353,8 @@ export default function CheckPage() {
             onClick={() => run({ kind: "text", text: trimmed }, "translate")}
             className={
               riskLeads
-                ? "min-h-10 rounded-xl border border-brand-300 bg-paper px-4 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-800 transition hover:bg-brand-50 disabled:opacity-50"
-                : "min-h-10 rounded-xl bg-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 disabled:bg-brand-200"
+                ? "inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-300 bg-paper px-4 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-800 transition hover:border-brand-400 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
+                : "inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-b from-brand-700 to-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand shadow-card ring-1 ring-brand-900/20 transition hover:from-brand-800 hover:to-brand-900 hover:shadow-raised disabled:cursor-not-allowed disabled:from-brand-100 disabled:to-brand-100 disabled:text-brand-600 disabled:shadow-none disabled:ring-brand-200"
             }
           >
             {running && mode === "translate" ? "查询中" : looksLikeTerm ? "查这个词" : "只翻成人话"}
@@ -323,12 +364,13 @@ export default function CheckPage() {
             type="button"
             disabled={running}
             onClick={() => fileRef.current?.click()}
-            className="min-h-10 rounded-xl border border-brand-300 bg-paper px-4 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-800 transition hover:bg-brand-50 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-300 bg-paper px-4 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-800 transition hover:border-brand-400 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <Icon name="upload" className="h-[1.05em] w-[1.05em]" />
             上传截图
           </button>
           {text && !running && (
-            <button type="button" onClick={() => setText("")} className="px-2 text-[length:calc(14px*var(--fs))] text-ink-mute hover:text-brand-700">
+            <button type="button" onClick={() => setText("")} className="rounded-lg px-2 py-1 text-[length:calc(14px*var(--fs))] text-ink-mute transition-colors hover:bg-brand-50 hover:text-brand-700">
               清空
             </button>
           )}

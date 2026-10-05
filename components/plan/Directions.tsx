@@ -28,7 +28,7 @@ function Row({ it, days }: { it: DirectionData; days: number }) {
   const [open, setOpen] = useState(false);
   const up = (it.rangePct ?? 0) >= 0;
   return (
-    <li className="rounded-xl border border-line bg-paper">
+    <li className="rounded-xl border border-line bg-paper shadow-card">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center gap-3 p-4 text-left">
         <div className="min-w-0 flex-1">
           <p className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">{it.name}</p>
@@ -93,7 +93,7 @@ export function Directions() {
   }, [data]);
 
   return (
-    <section className="rounded-2xl border border-line bg-paper p-5">
+    <section className="rounded-2xl border border-line bg-paper shadow-card p-5">
       <h3 className="text-[length:calc(16px*var(--fs))] font-semibold text-brand-900">有哪些方向，最近怎么走</h3>
       <p className="mt-1.5 text-[length:calc(14px*var(--fs))] text-ink-soft">点开看风险来自哪里。</p>
 

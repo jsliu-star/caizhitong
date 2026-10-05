@@ -1,6 +1,10 @@
 import type { Profile } from "@/lib/profile";
 import type { ShieldReport } from "@/lib/types";
 import { normalize } from "@/lib/rules/match";
+import { stageOf } from "@/lib/stage";
+import casesData from "@/data/scam-cases.json";
+
+const CASES = casesData.cases as Array<{ id: string; name: string; patternIds: string[] }>;
 
 /**
  * 按共享档案给体检报告加定向提示。
@@ -80,6 +84,25 @@ export function personalizeReport(report: ShieldReport, profile: Profile): Perso
         id: "pn-student",
         basis: "档案里的年龄段是 18-25",
         text: "这份内容出现了「兼职」「日结」「零门槛」这类字样。针对学生的套路通常要求你先垫资或先借款，一旦开始就很难只损失一次。",
+        tone: "warn",
+      });
+    }
+  }
+
+  // ③b 人生阶段 → 命中的话术正好是这个阶段要特别防的骗局
+  const stage = stageOf(profile);
+  if (stage && report.verdict.level !== "green") {
+    const guarded = stage.guard
+      .map((g) => ({ g, c: CASES.find((c) => c.id === g.caseId) }))
+      .find(({ c }) => c && c.patternIds.some((id) => hitIds.has(id)));
+    if (guarded?.c) {
+      const shared = guarded.c.patternIds.filter((id) => hitIds.has(id)).map((id) => `「${hitTypes.get(id)}」`);
+      notes.push({
+        id: "pn-stage",
+        basis: `你在档案里选的人生阶段是「${stage.label}」`,
+        text: `这份内容里的${shared.join("、")}，正是「${guarded.c.name}」的典型特征——这是「${stage.label}」阶段要特别防的一类。${guarded.g.why}${
+          guarded.g.basis.type === "official" && guarded.g.basis.source ? `（参考：${guarded.g.basis.source}）` : ""
+        }`,
         tone: "warn",
       });
     }

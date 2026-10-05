@@ -1,6 +1,7 @@
 import { getProvider } from "@/lib/llm";
+import { LIMITS, checkRate, jsonError, readJsonBody, takeModelQuota } from "@/lib/server/limits";
 import { findKeyPoints, findTerms } from "@/lib/rules/glossary";
-import { guardOutput } from "@/lib/rules/guard";
+import { dropRedacted, guardOutput } from "@/lib/rules/guard";
 import { redact } from "@/lib/rules/redact";
 import { DISCLAIMER } from "@/lib/types";
 
@@ -21,13 +22,13 @@ ${terms.length ? `【原文中出现的术语，已由词典给出解释，你�
 4. 直接输出正文，不要标题、不要列表、不要 markdown 符号`;
 
 export async function POST(req: Request) {
-  let text = "";
-  try {
-    text = String(((await req.json()) as { text?: string }).text ?? "").trim();
-  } catch {
-    return Response.json({ error: "请求体解析失败" }, { status: 400 });
-  }
-  if (text.length < 4) return Response.json({ error: "内容太短" }, { status: 400 });
+  const rate = checkRate(req, "translate");
+  if (!rate.ok) return jsonError(rate.status, rate.message, { code: rate.code, retryAfter: rate.retryAfter });
+  const parsed = await readJsonBody<{ text?: unknown }>(req);
+  if (!parsed.ok) return jsonError(parsed.status, parsed.message);
+  const text = String(parsed.body.text ?? "").trim();
+  if (text.length < 4) return jsonError(400, "内容太短");
+  if (text.length > LIMITS.textChars) return jsonError(413, `文字太长了，请控制在 ${LIMITS.textChars} 字以内。`);
 
   const { text: safe, count: redactedCount } = redact(text);
   const terms = findTerms(safe);
@@ -37,11 +38,12 @@ export async function POST(req: Request) {
   let plain = "";
   let demoMode = provider.isMock;
 
-  if (!provider.isMock) {
+  if (!provider.isMock && takeModelQuota()) {
     try {
       const raw = await provider.summarize(PROMPT(safe, terms.map((t) => t.term)));
       const g = guardOutput(raw.trim(), { sourceText: safe });
-      if (!g.shouldFallback && g.text.length >= 20) plain = g.text;
+      const shown = dropRedacted(g.text).text;
+      if (!g.shouldFallback && shown.length >= 20) plain = shown;
       else demoMode = true;
     } catch {
       demoMode = true;

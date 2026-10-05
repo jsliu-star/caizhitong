@@ -67,6 +67,15 @@ function inWhitelistedTerm(text: string, start: number, end: number): string | u
   return undefined;
 }
 
+/**
+ * 引文里是否包含合法金融术语（供语义通道使用）。
+ * 规则通道的白名单检查是「命中词落在术语内部」；语义通道的引文往往比术语长
+ * （如「业绩比较基准：年化2.80%—3.20%」），所以这里改为「引文包含术语」。
+ */
+export function compliantTermIn(quote: string): string | undefined {
+  return WHITELIST.find((term) => quote.includes(term));
+}
+
 /** 取命中位置所在的分句（用于展示上下文和判断教育语境） */
 function clauseAt(text: string, index: number, matchLen: number): string {
   let start = index;

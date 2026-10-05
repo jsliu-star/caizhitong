@@ -66,6 +66,16 @@ async function main() {
     { hits: 0, dropReason: "引文在原文中不存在" },
   );
 
+  // 复赛评测时在开发集上发现：模型把正规产品页的业绩比较基准标成收益承诺，正规产品被判高风险
+  await check(
+    "引文含合规术语「业绩比较基准」→ 丢弃",
+    "风险等级：R2（中低风险）  投资期限：封闭期365天  业绩比较基准：年化2.80%—3.20%",
+    JSON.stringify([
+      { patternId: "vp-expected-return", quote: "业绩比较基准：年化2.80%—3.20%", why: "宣传收益率", confidence: "high" },
+    ]),
+    { hits: 0, dropReason: "合规术语" },
+  );
+
   await check(
     "自创特征类别 → 丢弃",
     TEXT,

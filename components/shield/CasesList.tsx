@@ -57,7 +57,7 @@ export function CasesList({ cases }: { cases: ScamCase[] }) {
             key={c.id}
             id={c.id}
             data-outline={c.name}
-            className="scroll-mt-20 rounded-2xl border border-line bg-paper p-6 target:border-brand-500 target:ring-2 target:ring-brand-200"
+            className="scroll-mt-20 rounded-2xl border border-line bg-paper shadow-card p-6 target:border-brand-500 target:ring-2 target:ring-brand-200"
           >
             <div className="flex items-start gap-4">
               <span className="shrink-0 rounded-xl bg-brand-50 p-2.5 text-brand-700">

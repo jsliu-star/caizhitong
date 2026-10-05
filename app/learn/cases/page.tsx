@@ -37,7 +37,7 @@ export default function CasesPage() {
       </div>
 
       <section data-outline="共同点" className="mt-10 rounded-2xl bg-brand-900 p-6 text-brand-50">
-        <h2 className="text-[length:calc(17px*var(--fs))] font-bold text-white">共同点</h2>
+        <h2 className="text-[length:calc(17px*var(--fs))] font-bold text-on-brand">共同点</h2>
         <ul className="mt-4 space-y-2.5 text-[length:calc(14px*var(--fs))] leading-relaxed">
           {[
             "承诺的收益远高于市场，同时声称没有风险——这两件事在金融上不可能同时成立",
@@ -54,7 +54,7 @@ export default function CasesPage() {
         </ul>
         <Link
           href="/"
-          className="mt-5 inline-block rounded-xl bg-brand-50 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-900 transition hover:bg-white"
+          className="mt-5 inline-block rounded-xl bg-brand-50 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-900 transition hover:bg-paper"
         >
           去做一次体检 →
         </Link>

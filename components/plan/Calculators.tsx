@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { emergencyFund, fmtMoney, fmtPct, installmentIrr, type JobStability } from "@/lib/finance";
 import { StatTile } from "@/components/viz";
 import { saveProfile } from "@/lib/profile";
+import { Icon } from "@/components/ui/Icon";
 
 const inputCls =
   "w-full rounded-lg border border-line bg-paper-soft px-3 py-2.5 text-[length:calc(15px*var(--fs))] tabular-nums text-ink outline-none transition focus:border-brand-400";
@@ -32,7 +33,7 @@ export function DebtCalculator() {
   }, [r.apr]);
 
   return (
-    <section className="rounded-2xl border border-line bg-paper p-6">
+    <section className="rounded-2xl border border-line bg-paper shadow-card p-6">
       <h2 className="text-[length:calc(19px*var(--fs))] font-bold text-brand-950">分期真实年化计算器</h2>
       <p className="mt-2 text-[length:calc(14px*var(--fs))] text-ink-soft">本金逐月递减，手续费按全额收。真实成本比宣传数字高一倍以上。</p>
 
@@ -71,8 +72,8 @@ export function DebtCalculator() {
       {r.apr > 0 && (
         <p className="mt-4 rounded-xl bg-brand-900 p-4 text-[length:calc(14px*var(--fs))] leading-relaxed text-brand-50">
           真实成本是宣传数字的
-          <span className="mx-1 text-[length:calc(18px*var(--fs))] font-bold text-white">{(r.apr / r.nominalTotalRate).toFixed(1)} 倍</span>。
-          {heavy && <span className="font-semibold text-white">已超过 10%，先还债。</span>}
+          <span className="mx-1 text-[length:calc(18px*var(--fs))] font-bold text-on-brand">{(r.apr / r.nominalTotalRate).toFixed(1)} 倍</span>。
+          {heavy && <span className="font-semibold text-on-brand">已超过 10%，先还债。</span>}
         </p>
       )}
 
@@ -103,7 +104,7 @@ export function EmergencyCalculator() {
   }, [r.months]);
 
   return (
-    <section className="rounded-2xl border border-line bg-paper p-6">
+    <section className="rounded-2xl border border-line bg-paper shadow-card p-6">
       <h2 className="text-[length:calc(19px*var(--fs))] font-bold text-brand-950">应急备用金计算器</h2>
       <p className="mt-2 text-[length:calc(14px*var(--fs))] text-ink-soft">没有应急金，遇到急事只能在最坏的时点卖出。</p>
 
@@ -139,8 +140,8 @@ export function EmergencyCalculator() {
                 x.on ? "border-brand-600 bg-brand-50" : "border-line bg-paper hover:border-brand-300"
               }`}>
               <span aria-hidden className={`grid h-5 w-5 shrink-0 place-items-center rounded border text-[length:calc(12px*var(--fs))] font-bold ${
-                  x.on ? "border-brand-600 bg-brand-600 text-white" : "border-line text-transparent"
-                }`}>✓</span>
+                  x.on ? "border-brand-600 bg-brand-600 text-on-brand" : "border-line text-transparent"
+                }`}><Icon name="check" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} /></span>
               <span className="text-[length:calc(14px*var(--fs))] font-medium text-ink">{x.label}</span>
             </button>
           ))}

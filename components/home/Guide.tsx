@@ -1,6 +1,7 @@
 "use client";
 
 import type { Term } from "@/lib/rules/glossary";
+import { Icon } from "@/components/ui/Icon";
 
 /* ────────────────────────────────────────────────────────────
    首屏说明与案例。纯展示组件，不发请求、不碰档案。
@@ -11,19 +12,33 @@ import type { Term } from "@/lib/rules/glossary";
 /** 三步图示。图标全部内联 SVG —— 项目禁止任何外链资源。 */
 export function HowItWorks() {
   return (
-    <section aria-label="这一页怎么用" className="mt-5 rounded-2xl border border-line bg-paper-soft p-4 sm:p-5">
-      <ol className="grid gap-3 sm:grid-cols-3 sm:gap-2">
+    <section aria-label="这一页怎么用" className="mt-5">
+      <ol className="grid gap-3 sm:grid-cols-3">
         {STEPS.map((s, i) => (
-          <li key={s.title} className="flex gap-3 sm:flex-col sm:gap-2">
+          <li
+            key={s.title}
+            className="group cd-lift relative flex items-center gap-3 rounded-2xl border border-line bg-paper px-3.5 py-3 shadow-card sm:flex-col sm:items-stretch sm:gap-2.5 sm:p-4"
+          >
             <div className="flex shrink-0 items-center gap-2">
               <span
                 aria-hidden
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-brand-200 bg-paper text-brand-700"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 text-brand-700 ring-1 ring-brand-200"
               >
-                {s.icon}
+                <span className="cd-wiggle inline-flex">{s.icon}</span>
               </span>
-              <span className="text-[length:calc(13px*var(--fs))] font-semibold text-brand-700 sm:hidden">第 {i + 1} 步</span>
+              <span className="hidden text-[length:calc(12px*var(--fs))] font-semibold tracking-wider text-brand-600 sm:inline">
+                第 {i + 1} 步
+              </span>
             </div>
+            {/* 步骤之间的箭头，只在三列并排时出现 */}
+            {i < STEPS.length - 1 && (
+              <span
+                aria-hidden
+                className="absolute -right-[0.95rem] top-1/2 z-10 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-full border border-line bg-paper text-brand-500 shadow-card sm:grid"
+              >
+                <Icon name="chevronRight" className="h-3.5 w-3.5" strokeWidth={2.25} />
+              </span>
+            )}
             <div>
               <p className="text-[length:calc(15px*var(--fs))] font-semibold text-ink">{s.title}</p>
               <p className="mt-0.5 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">{s.body}</p>
@@ -113,7 +128,7 @@ export function TermChips({ terms, onPick, disabled }: { terms: string[]; onPick
             type="button"
             disabled={disabled}
             onClick={() => onPick(t)}
-            className="min-h-9 rounded-full border border-brand-200 bg-paper px-3 py-2 text-[length:calc(13px*var(--fs))] font-medium text-brand-700 transition hover:bg-brand-50 disabled:opacity-50"
+            className="min-h-9 rounded-full border border-brand-200 bg-paper px-3.5 py-2 text-[length:calc(13px*var(--fs))] font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-50 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t}
           </button>
@@ -151,8 +166,8 @@ export function SampleCases({
   heading?: string;
 }) {
   return (
-    <section aria-label="案例" className="mt-6">
-      <h2 className="text-[length:calc(17px*var(--fs))] font-semibold text-brand-950">{heading}</h2>
+    <section aria-label="案例" className="mt-10">
+      <h2 className="text-[length:calc(18px*var(--fs))] font-bold tracking-tight text-brand-950">{heading}</h2>
       <p className="mt-1 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">
         下面都是我们自己做的仿真样本，机构名和数字全是虚构的，不指向任何真实公司或产品。
       </p>
@@ -167,7 +182,7 @@ export function SampleCases({
                 type="button"
                 disabled={disabled}
                 onClick={() => onPick(s)}
-                className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-line bg-paper text-left transition hover:border-brand-400 hover:bg-brand-50 disabled:opacity-50"
+                className="cd-lift group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-line bg-paper text-left shadow-card hover:border-brand-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="flex h-32 items-center justify-center overflow-hidden border-b border-line bg-paper-soft">
                   {s.image ? (
@@ -175,7 +190,7 @@ export function SampleCases({
                     <img
                       src={s.image}
                       alt={`${name}示例截图`}
-                      className="h-full w-full object-cover object-top"
+                      className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
                     />
                   ) : (
                     <TextPreview text={s.text} />
@@ -197,8 +212,9 @@ export function SampleCases({
                     )}
                   </span>
                   <span className="mt-1.5 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">{s.desc}</span>
-                  <span className="mt-2 text-[length:calc(13px*var(--fs))] font-medium text-brand-700 group-hover:text-brand-900">
-                    走一遍完整流程 →
+                  <span className="mt-auto inline-flex items-center gap-1 pt-3 text-[length:calc(13px*var(--fs))] font-semibold text-brand-700 group-hover:text-brand-900">
+                    走一遍完整流程
+                    <Icon name="arrowRight" className="h-[1em] w-[1em] transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </span>
               </button>

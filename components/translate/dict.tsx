@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import glossaryData from "@/data/glossary.json";
 import type { Term } from "@/lib/rules/glossary";
 import { TERM_TO_QUESTION } from "./quiz";
+import { Icon } from "@/components/ui/Icon";
 
 const ALL_TERMS = glossaryData.terms as Term[];
 
@@ -52,7 +53,7 @@ export function Dict({
 
   return (
     <div>
-      <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
+      <section className="rounded-2xl border border-line bg-paper shadow-card p-5 sm:p-6">
         <h2 className="text-[length:calc(18px*var(--fs))] font-bold text-brand-950">术语词典</h2>
         <p className="mt-2 text-[length:calc(14px*var(--fs))] text-ink-soft">
           {ALL_TERMS.length} 个概念，按用途分六类。
@@ -71,7 +72,7 @@ export function Dict({
             onClick={() => setGroup(null)}
             className={`min-h-9 rounded-full border px-3.5 py-2 text-[length:calc(13px*var(--fs))] font-semibold transition ${
               group === null
-                ? "border-brand-800 bg-brand-800 text-white"
+                ? "border-brand-800 bg-brand-800 text-on-brand"
                 : "border-line bg-paper text-ink-soft hover:bg-brand-50"
             }`}
           >
@@ -87,7 +88,7 @@ export function Dict({
                 title={GROUP_HINT[g]}
                 className={`min-h-9 rounded-full border px-3.5 py-2 text-[length:calc(13px*var(--fs))] font-semibold transition ${
                   group === g
-                    ? "border-brand-800 bg-brand-800 text-white"
+                    ? "border-brand-800 bg-brand-800 text-on-brand"
                     : "border-line bg-paper text-ink-soft hover:bg-brand-50"
                 }`}
               >
@@ -155,14 +156,14 @@ export function Dict({
               )}
               <p className="mt-2 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">{t.plain}</p>
               <p className="mt-2 flex gap-2 text-[length:calc(13px*var(--fs))] leading-relaxed text-brand-800">
-                <span aria-hidden>⚠️</span>
+                <Icon name="alert" className="mt-[0.2em] h-[1.05em] w-[1.05em] text-risk-amber" />
                 <span>{t.watch}</span>
               </p>
             </li>
           );
         })}
         {list.length === 0 && (
-          <li className="rounded-2xl border border-line bg-paper p-5 text-[length:calc(14px*var(--fs))] text-ink-mute">
+          <li className="rounded-2xl border border-line bg-paper shadow-card p-5 text-[length:calc(14px*var(--fs))] text-ink-mute">
             没有匹配的术语。
           </li>
         )}

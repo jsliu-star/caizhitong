@@ -1,0 +1,27 @@
+# 每次推送与 PR：跑全部测试 + 生产构建。失败时在 GitHub 上标红，
+# 配合 Vercel 的「Require checks to pass」即可做到测试不过不上线。
+# CI 里不配置模型 key：测试全部是确定性的，构建走演示模式。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLM_PROVIDER: mock
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # .npmrc 指向国内镜像，GitHub 的机器在海外，这里改回官方源
+      - run: npm ci --no-audit --no-fund --registry=https://registry.npmjs.org
+      - run: npm test
+      - run: npm run build

@@ -82,6 +82,32 @@ export function buildVerdict(args: {
 }
 
 /**
+ * 「讲骗局」文体的结论（报道、警示、科普）。不给风险等级的判断，而是把里面引用的话术教给用户认。
+ * 措辞同样受合规红线约束：不说「这是诈骗」，只说「命中 N 类监管明令禁止的表述特征」。
+ */
+export function buildReportVerdict(hits: Hit[], cues: string[]): Verdict {
+  const types = [...new Set(hits.map((h) => h.type))];
+  const hardTypes = [...new Set(hits.filter((h) => h.severity === "hard").map((h) => h.type))];
+  const examples = [...new Set(hits.map((h) => h.matched))].slice(0, 4);
+  const cueText = cues.slice(0, 3).map((c) => `「${c}」`).join("");
+  return {
+    level: "yellow",
+    headline: "这段文字是在讲骗局，不是在推销",
+    summary:
+      `从${cueText}这些说法看，这是一段报道、提醒或科普，而不是有人在向你推销。` +
+      `它引用了 ${types.length} 类话术${hardTypes.length ? `，其中${hardTypes.map((t) => `「${t}」`).join("、")}属于监管明令禁止的表述` : ""}` +
+      `${examples.length ? `，比如${examples.map((e) => `「${e}」`).join("、")}` : ""}。` +
+      "这些话本身就是骗子的常用说法——以后如果有人这样对你说，就要警惕。" +
+      "如果这其实是别人发给你的宣传，而不是新闻或提醒，请把原话重新发来，或去掉转述的部分再查一次。",
+    actions: [
+      "记住这几种说法：在宣传里看到它们，先停下来，不急着决定",
+      "如果是转给家里人看的，可以把下面的「风险条目」一起发过去，一条条讲清楚",
+      "遇到疑似诈骗拨 110，或拨打反诈专线 12381 咨询",
+    ],
+  };
+}
+
+/**
  * 处境信号。用户在追问里补充的信息会改变「现在最该做什么」——
  * 已经转了钱的人不需要被告知「不要转账」，他需要的是止损和报警。
  */

@@ -49,7 +49,7 @@ export function Assessment({
   if (!q) return null;
 
   return (
-    <div className="rounded-2xl border border-line bg-paper p-6">
+    <div className="rounded-2xl border border-line bg-paper shadow-card p-6">
       {/* 进度 */}
       <div className="flex items-center gap-3">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-brand-50">
@@ -76,7 +76,7 @@ export function Assessment({
               key={o.value}
               type="button"
               onClick={() => answer(q.id, o.value)}
-              className="group w-full rounded-xl border border-line bg-paper p-4 text-left transition hover:border-brand-500 hover:bg-brand-50"
+              className="group w-full rounded-xl border border-line bg-paper shadow-card p-4 text-left transition hover:border-brand-500 hover:bg-brand-50"
             >
               <span className="block text-[length:calc(15px*var(--fs))] font-semibold text-ink group-hover:text-brand-900">{o.label}</span>
               {o.desc && <span className="mt-0.5 block text-[length:calc(13px*var(--fs))] text-ink-mute">{o.desc}</span>}
@@ -108,7 +108,7 @@ export function Assessment({
           <button
             type="submit"
             disabled={!numInput}
-            className="rounded-lg bg-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 disabled:bg-brand-200"
+            className="rounded-lg bg-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900 disabled:bg-brand-200"
           >
             下一步
           </button>

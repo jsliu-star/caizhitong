@@ -97,7 +97,7 @@ export function FontScale() {
         title="调节文字大小"
         className={`flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[length:calc(13px*var(--fs))] font-semibold transition sm:px-3 sm:text-[length:calc(13.5px*var(--fs))] ${
           pct > 100
-            ? "border-brand-700 bg-brand-800 text-white"
+            ? "border-brand-700 bg-brand-800 text-on-brand"
             : "border-brand-200 bg-paper text-brand-700 hover:bg-brand-50"
         }`}
       >
@@ -115,7 +115,7 @@ export function FontScale() {
             ref={panelRef}
             role="dialog"
             aria-label="文字大小调节"
-            className="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-line bg-paper p-4 shadow-lg"
+            className="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-line bg-paper p-4 shadow-pop"
           >
             <div className="flex items-baseline justify-between">
               <p className="text-[length:calc(15px*var(--fs))] font-bold text-brand-900">文字大小</p>
@@ -148,7 +148,7 @@ export function FontScale() {
                   aria-pressed={pct === p.pct}
                   className={`min-h-9 rounded-lg border px-1 py-2 text-[length:calc(13px*var(--fs))] font-semibold transition ${
                     pct === p.pct
-                      ? "border-brand-700 bg-brand-800 text-white"
+                      ? "border-brand-700 bg-brand-800 text-on-brand"
                       : "border-line bg-paper text-brand-800 hover:bg-brand-50"
                   }`}
                 >

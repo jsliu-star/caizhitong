@@ -125,6 +125,15 @@ export interface ShieldReport {
   entity: EntityCheck;
   regulations: Regulation[];
   verdict: Verdict;
+  /**
+   * 文体：推销 / 讲骗局（报道、警示、科普）。讲骗局时命中项照常列出，但结论不给「高风险」。
+   * 见 lib/rules/genre.ts
+   */
+  genre?: import("@/lib/rules/genre").GenreResult;
+  /** 结果来自缓存时注明来源与生成时间（同一段内容给出同一结论） */
+  cache?: { source: "snapshot" | "memory"; generatedAt: string };
+  /** 需要明示给用户的情况，如今日模型额度用完、本次只用规则判定 */
+  notice?: string;
   disclaimer: string;
   demoMode: boolean;
   generatedAt: string;

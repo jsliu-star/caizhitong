@@ -1,5 +1,8 @@
 "use client";
 
+import { Icon } from "@/components/ui/Icon";
+import { Mascot } from "@/components/assistant/Mascot";
+
 export type StageKey = "vision" | "match" | "semantic" | "entity" | "citation" | "verdict";
 export type StageStatus = "idle" | "running" | "done";
 
@@ -23,8 +26,14 @@ export function Progress({
   mode: "translate" | "risk";
 }) {
   const shown = mode === "translate" ? STAGES.filter((s) => s.key === "vision" || s.key === "verdict") : STAGES;
+  const busy = shown.some((s) => status[s.key] === "running");
   return (
-    <div className="rounded-xl border border-line bg-paper px-5 py-4">
+    <div className="flex items-center gap-4 rounded-xl border border-line bg-paper px-4 py-4 shadow-card sm:px-5">
+      {/* 小通拿着放大镜「在看」；做完了眯眼笑 */}
+      <span aria-hidden className="hidden shrink-0 sm:block">
+        <Mascot mood={busy ? "look" : "happy"} size={58} />
+      </span>
+      <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
         {shown.map((s, i) => {
           const st = status[s.key];
@@ -35,22 +44,23 @@ export function Progress({
                   st === "done"
                     ? "bg-brand-100 text-brand-800"
                     : st === "running"
-                      ? "cd-pulse bg-brand-600 text-white"
+                      ? "cd-pulse bg-brand-600 text-on-brand"
                       : "bg-paper-soft text-ink-mute"
                 }`}
               >
-                {st === "done" ? "✓" : i + 1}
+                {st === "done" ? <Icon name="check" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} /> : i + 1}
                 {s.name}
                 <span className={`text-[length:calc(10px*var(--fs))] ${st === "running" ? "text-brand-100" : "text-ink-mute"}`}>
                   {s.engine === "model" ? "模型" : "规则"}
                 </span>
               </span>
-              {i < shown.length - 1 && <span aria-hidden className="text-brand-200">›</span>}
+              {i < shown.length - 1 && <Icon name="chevronRight" className="h-3.5 w-3.5 text-brand-300" />}
             </span>
           );
         })}
       </div>
       {detail && <p className="cd-in mt-2.5 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">{detail}</p>}
+      </div>
     </div>
   );
 }

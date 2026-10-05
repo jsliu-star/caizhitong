@@ -1,0 +1,495 @@
+{
+  "_note": "人生阶段知识库。focus 只讲原则与顺序，不指向任何具体产品；guard 的 basis.type=official 表示有官方公开材料直接对应（附链接），type=reasoning 表示是基于该阶段处境的推理，不代表统计结论。不得在此写入任何没有来源的数字。",
+  "version": "0.1",
+  "updatedAt": "2026-10-04",
+  "stages": [
+    {
+      "id": "student",
+      "label": "在校学生",
+      "ageHint": "大约 18–24 岁",
+      "ageBands": [
+        "18-25"
+      ],
+      "icon": "graduation",
+      "situation": "收入少、开销靠家里或兼职，第一次自己管钱，也是第一次被各种「赚钱机会」找上门。",
+      "focus": [
+        {
+          "title": "先学会记账，再谈理财",
+          "why": "知道钱花在哪，比知道钱放在哪更重要。这个阶段最大的财富是时间和习惯。"
+        },
+        {
+          "title": "别碰网贷和分期",
+          "why": "分期的「每期手续费」折成真实年化往往远高于宣传数字。规划师里的分期计算器能当场算出来。"
+        },
+        {
+          "title": "看懂最基础的几个词",
+          "why": "年化、封闭期、业绩比较基准——先把产品页上的字读懂，以后才不会被误导。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-account",
+          "why": "「借你的卡用用，按流水给手续费」看起来不用出一分钱，代价是替别人承担刑事责任。",
+          "basis": {
+            "type": "official",
+            "source": "最高人民检察院·在校学生涉「两卡」犯罪典型案例（2021-06-23）",
+            "url": "https://www.spp.gov.cn/spp/xwfbh/dxal/202106/t20210623_522118.shtml"
+          }
+        },
+        {
+          "caseId": "sc-crypto",
+          "why": "对新技术有好感、但还不了解金融规则，是虚拟币「理财」最想找的人。",
+          "basis": {
+            "type": "reasoning"
+          }
+        },
+        {
+          "caseId": "sc-stock-group",
+          "why": "刚开户、想快点赚到第一笔钱，免费荐股群的门槛最低。",
+          "basis": {
+            "type": "reasoning"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-account-lending",
+        "vp-illegal-fundraising-targets",
+        "vp-stock-recommendation",
+        "vp-private-traffic"
+      ],
+      "learn": [
+        "term-1",
+        "scam-1",
+        "term-2"
+      ],
+      "planTopics": [
+        "debt-first",
+        "benchmark"
+      ],
+      "questions": [
+        "有人让我出借银行卡赚手续费，有问题吗？",
+        "分期买手机划算吗？",
+        "年化是什么意思？"
+      ],
+      "talk": "这个阶段最值钱的是时间和习惯。先把账记清楚，再把几个基础词弄懂。",
+      "next": "工作以后，第一件事是攒出几个月的应急金，而不是急着找收益。"
+    },
+    {
+      "id": "early-career",
+      "label": "初入职场",
+      "ageHint": "大约 22–30 岁",
+      "ageBands": [
+        "18-25",
+        "26-35"
+      ],
+      "icon": "briefcase",
+      "situation": "开始有稳定收入和第一笔积蓄，想让钱「动起来」，但还没经历过亏损。",
+      "focus": [
+        {
+          "title": "先攒应急金",
+          "why": "覆盖几个月的必要开支、随时能取，是后面一切安排的地基。规划师里的应急金计算器能按你的情况算。"
+        },
+        {
+          "title": "先还高息负债",
+          "why": "还掉一笔高息负债，等于确定地省下这笔利息；任何产品都不能保证给你同样的收益。"
+        },
+        {
+          "title": "弄清自己能承受多大波动",
+          "why": "没亏过钱的人，往往高估自己的承受能力。做一次风险测评，看看回答里有没有互相矛盾的地方。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-guaranteed",
+          "why": "刚有积蓄、想尽快增值，「保本又高息」最有吸引力——而这两件事在法律上不能同时成立。",
+          "basis": {
+            "type": "reasoning"
+          }
+        },
+        {
+          "caseId": "sc-romance",
+          "why": "以网络婚恋交友为诱饵、再引导投资，是检察机关点名的诈骗方式。单身、工作忙、社交圈窄的时候最容易被接近。",
+          "basis": {
+            "type": "official",
+            "source": "最高人民检察院·陈某、宋某琦等5人诈骗案（2021-05-18）",
+            "url": "https://www.spp.gov.cn/spp/dxwlzp2021/202105/t20210518_518545.shtml"
+          }
+        },
+        {
+          "caseId": "sc-stock-group",
+          "why": "「老师带单」常用小额先赚、再引导加大投入的推进方式。",
+          "basis": {
+            "type": "reasoning"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-guarantee-principal",
+        "vp-expected-return",
+        "vp-emotional-manipulation",
+        "vp-stock-recommendation",
+        "vp-private-traffic"
+      ],
+      "learn": [
+        "sense-1",
+        "term-2",
+        "scam-2"
+      ],
+      "planTopics": [
+        "emergency",
+        "debt-first",
+        "risk-match"
+      ],
+      "questions": [
+        "我该先还债还是先理财？",
+        "应急金要留多少？",
+        "网上认识的人带我投资，靠谱吗？"
+      ],
+      "talk": "第一笔积蓄最该先变成应急金。收益可以慢慢来，地基要先打好。",
+      "next": "如果准备成家或买房，可以提前把首付目标放进规划师，算算靠攒钱能不能达成。"
+    },
+    {
+      "id": "couple",
+      "label": "成家",
+      "ageHint": "大约 25–35 岁",
+      "ageBands": [
+        "26-35"
+      ],
+      "icon": "home",
+      "situation": "从一个人的钱变成两个人的钱，开始有买房、结婚这类大额目标。",
+      "focus": [
+        {
+          "title": "把家庭应急金单独留出来",
+          "why": "两个人的开支更大，一方收入中断时，应急金要能撑住整个家。"
+        },
+        {
+          "title": "大额目标先算可行性",
+          "why": "首付这类目标是纯数学：给定年限、本金和月投入，就能反解出需要多少年化。算出来高得不现实，该调的是目标或年限，不是去找更高收益的产品。"
+        },
+        {
+          "title": "两个人一起做决定",
+          "why": "家里的大额资金去向，最好两个人都知情。很多骗局的第一步，就是让你「先别告诉家里」。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-managed",
+          "why": "工作忙、没时间研究，最容易把账户交给「懂行的朋友」。「亏了我赔」在法律上什么都不是。",
+          "basis": {
+            "type": "official",
+            "source": "中国证监会·投资者保护「明规则、识风险」案例",
+            "url": "https://www.csrc.gov.cn/csrc/c100211/c1452037/content.shtml"
+          }
+        },
+        {
+          "caseId": "sc-guaranteed",
+          "why": "为了凑首付想「快一点」，会让人对高收益承诺放松警惕。",
+          "basis": {
+            "type": "reasoning"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-discretionary-trading",
+        "vp-guarantee-principal",
+        "vp-expected-return",
+        "vp-emotional-manipulation"
+      ],
+      "learn": [
+        "sense-1",
+        "term-1",
+        "sense-2"
+      ],
+      "planTopics": [
+        "goal",
+        "emergency",
+        "allocation"
+      ],
+      "questions": [
+        "首付目标靠攒钱能达成吗？",
+        "两个人的钱该怎么分成几份？",
+        "朋友说帮我们打理钱，可以吗？"
+      ],
+      "talk": "两个人的钱，大额去向最好两个人都知道。这一条本身就能挡掉很多骗局。",
+      "next": "有孩子之后，保障会比收益更重要，可以提前了解。"
+    },
+    {
+      "id": "parenting",
+      "label": "有孩子",
+      "ageHint": "大约 28–45 岁",
+      "ageBands": [
+        "26-35",
+        "36-50"
+      ],
+      "icon": "baby",
+      "situation": "开支明显变大，时间被孩子占满，开始考虑教育金这种十几年的长期目标。",
+      "focus": [
+        {
+          "title": "保障先于收益",
+          "why": "家里有人依赖你的收入时，先想清楚「万一我病了、收入断了怎么办」，再谈钱怎么增值。"
+        },
+        {
+          "title": "教育金按长期目标算",
+          "why": "十几年后的目标，期限是最大的优势。先用规划师算一下按现在的投入要多少年化，再决定要不要调整。"
+        },
+        {
+          "title": "看懂「教育金」「专属」这类名字背后是什么",
+          "why": "产品名字里带「教育」「专属」，不改变它的风险等级和费用。读条款，不读名字。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-rebate",
+          "why": "在家带孩子、想有点额外收入，「推荐好友有返利」的熟人圈子项目最容易找上门。",
+          "basis": {
+            "type": "reasoning"
+          }
+        },
+        {
+          "caseId": "sc-guaranteed",
+          "why": "为孩子的事，人更愿意冒险，也更怕错过「名额有限」。",
+          "basis": {
+            "type": "reasoning"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-pyramid-compensation",
+        "vp-fund-pool",
+        "vp-guarantee-principal",
+        "vp-urgency"
+      ],
+      "learn": [
+        "sense-2",
+        "term-1",
+        "scam-3"
+      ],
+      "planTopics": [
+        "goal",
+        "emergency",
+        "lock"
+      ],
+      "questions": [
+        "教育金要怎么准备？",
+        "朋友拉我做一个推荐返利的项目，能做吗？",
+        "封闭期长的产品适合教育金吗？"
+      ],
+      "talk": "孩子的事最容易让人着急。越着急，越要先看清楚它的风险等级和封闭期。",
+      "next": "孩子大一些以后，自己的养老准备也该开始了，越早越从容。"
+    },
+    {
+      "id": "midlife",
+      "label": "上有老下有小",
+      "ageHint": "大约 40–55 岁",
+      "ageBands": [
+        "36-50",
+        "51-60"
+      ],
+      "icon": "users",
+      "situation": "收入和资产到了较高的时候，同时要照顾父母和孩子，也开始想到自己的养老。",
+      "focus": [
+        {
+          "title": "开始认真准备自己的养老",
+          "why": "离退休还有十几年，期限仍然站在你这边。先算清楚目标，再决定每月投入多少。"
+        },
+        {
+          "title": "替父母把一道关",
+          "why": "老人遇到的骗局往往不靠广告，而是靠熟人、社区活动和上门服务。教他们一句：先挂掉，自己回拨官方电话。"
+        },
+        {
+          "title": "别让一笔钱压在一个地方",
+          "why": "资产多了以后，「集中在一个项目」是最大的风险。真正的分散发生在资产大类之间。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-preipo",
+          "why": "有一定积蓄、又有人脉，「原始股」「上市前入股」最常通过熟人推介找上门。",
+          "basis": {
+            "type": "reasoning"
+          }
+        },
+        {
+          "caseId": "sc-managed",
+          "why": "工作最忙的时候，最容易把账户交给别人代操作。",
+          "basis": {
+            "type": "reasoning"
+          }
+        },
+        {
+          "caseId": "sc-impersonate",
+          "why": "这一条是替父母防的：冒充医保、公检法、客服，是针对老年人的典型手法。",
+          "basis": {
+            "type": "official",
+            "source": "最高人民法院·电信网络诈骗犯罪典型案例（2016-03-04）",
+            "url": "https://www.court.gov.cn/zixun/xiangqing/17152.html"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-illegal-fundraising-targets",
+        "vp-unverifiable-license",
+        "vp-discretionary-trading",
+        "vp-urgency"
+      ],
+      "learn": [
+        "sense-3",
+        "scam-3",
+        "sense-2"
+      ],
+      "planTopics": [
+        "allocation",
+        "diversify",
+        "goal"
+      ],
+      "questions": [
+        "朋友推荐上市前的原始股，能买吗？",
+        "怎么帮爸妈防骗？",
+        "我该什么时候开始准备养老？"
+      ],
+      "talk": "这个阶段你不只替自己把关，也在替爸妈和孩子把关。",
+      "next": "临近退休时，重点会从「增值」转向「稳住」和「随时能用」。"
+    },
+    {
+      "id": "pre-retire",
+      "label": "临近退休",
+      "ageHint": "大约 50–60 岁",
+      "ageBands": [
+        "51-60"
+      ],
+      "icon": "hourglass",
+      "situation": "离退休只有几年，承受亏损的时间不多了，这时候最怕的是一次大的损失。",
+      "focus": [
+        {
+          "title": "把波动降下来",
+          "why": "几年内就要用的钱，不该放在波动大的地方。期限，而不是收益，决定钱该放哪。"
+        },
+        {
+          "title": "盘清退休后的现金流",
+          "why": "退休后每月有多少收入、多少必要开支，缺口多大——先算清楚，再谈要不要投资。"
+        },
+        {
+          "title": "对「养老」「专属」名义的项目格外谨慎",
+          "why": "名字里带养老，不代表风险低。签之前看清楚是谁在卖、有没有资质编号。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-guaranteed",
+          "why": "以养老服务、养老项目为名非法集资，是官方列出的高发领域之一。",
+          "basis": {
+            "type": "official",
+            "source": "北京市地方金融管理局·六大非法集资高发领域风险提示（2022-05-31）",
+            "url": "https://jrj.beijing.gov.cn/jrxcjy/jraq/djffjz/202207/t20220707_2765846.html"
+          }
+        },
+        {
+          "caseId": "sc-preipo",
+          "why": "想在退休前「最后搏一把」时，对「上市就翻倍」最没有抵抗力。",
+          "basis": {
+            "type": "reasoning"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-guarantee-principal",
+        "vp-expected-return",
+        "vp-illegal-fundraising-targets",
+        "vp-deposit-confusion"
+      ],
+      "learn": [
+        "sense-3",
+        "term-3",
+        "scam-2"
+      ],
+      "planTopics": [
+        "lock",
+        "deposit",
+        "risk-match"
+      ],
+      "questions": [
+        "养老公寓预订送高息，能参加吗？",
+        "快退休了，钱该怎么放？",
+        "理财和存款到底差在哪？"
+      ],
+      "talk": "离退休越近，越要把「稳住」放在「多赚」前面。",
+      "next": "退休以后，防骗会变成最重要的一件事——可以提前和家人约好，大额支出一起商量。"
+    },
+    {
+      "id": "retired",
+      "label": "已退休",
+      "ageHint": "大约 60 岁以上",
+      "ageBands": [
+        "60+"
+      ],
+      "icon": "heart",
+      "situation": "收入主要靠养老金和积蓄，时间多了，也更容易成为各种「免费活动」的目标。",
+      "focus": [
+        {
+          "title": "大额支出和家人商量",
+          "why": "约好一条规矩：超过一定金额的转账，先跟子女说一声。这一条能挡掉大多数骗局。"
+        },
+        {
+          "title": "钱放在随时能取的地方",
+          "why": "看病、应急都要用钱，流动性比收益重要得多。"
+        },
+        {
+          "title": "免费的活动，先想想图什么",
+          "why": "免费体检、旅游、送礼品之后的「理财讲座」，是很常见的推进路径。"
+        }
+      ],
+      "guard": [
+        {
+          "caseId": "sc-guaranteed",
+          "why": "以提供养老服务、预订养老床位、办理会员卡为名非法集资，是官方点名的养老领域高发情形。",
+          "basis": {
+            "type": "official",
+            "source": "北京市地方金融管理局·六大非法集资高发领域风险提示（2022-05-31）",
+            "url": "https://jrj.beijing.gov.cn/jrxcjy/jraq/djffjz/202207/t20220707_2765846.html"
+          }
+        },
+        {
+          "caseId": "sc-impersonate",
+          "why": "冒充医保中心、公安、检察院的连环电话，是法院公布的典型案例。",
+          "basis": {
+            "type": "official",
+            "source": "最高人民法院·电信网络诈骗犯罪典型案例（2016-03-04）",
+            "url": "https://www.court.gov.cn/zixun/xiangqing/17152.html"
+          }
+        },
+        {
+          "caseId": "sc-rebate",
+          "why": "老同事、老邻居拉着一起「投项目拿返利」，熟人关系让人不好意思拒绝。",
+          "basis": {
+            "type": "reasoning"
+          }
+        }
+      ],
+      "patternIds": [
+        "vp-guarantee-principal",
+        "vp-expected-return",
+        "vp-urgency",
+        "vp-emotional-manipulation",
+        "vp-pyramid-compensation",
+        "vp-deposit-confusion"
+      ],
+      "learn": [
+        "sense-3",
+        "scam-1",
+        "scam-3"
+      ],
+      "planTopics": [
+        "deposit",
+        "lock",
+        "scam"
+      ],
+      "questions": [
+        "有人打电话说我的医保卡异常，怎么办？",
+        "社区讲座推荐的养老理财能买吗？",
+        "理财和存款到底差在哪？"
+      ],
+      "talk": "不着急的事，都可以先跟家里人商量一下再决定。",
+      "next": ""
+    }
+  ]
+}

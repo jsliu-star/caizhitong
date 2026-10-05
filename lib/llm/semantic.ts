@@ -1,5 +1,5 @@
 import type { LLMProvider } from "@/lib/llm/types";
-import { contextAt, normalize, patternTaxonomy } from "@/lib/rules/match";
+import { compliantTermIn, contextAt, normalize, patternTaxonomy } from "@/lib/rules/match";
 import type { Hit } from "@/lib/types";
 
 /**
@@ -141,6 +141,16 @@ export async function detectSemantic(
     }
     if (ctx.educational) {
       dropped.push({ patternId, quote: label, reason: `处于科普语境「${ctx.educational}」` });
+      continue;
+    }
+    /**
+     * 合规术语：与规则通道同一份白名单（violation-patterns.json → termWhitelist）。
+     * 实测模型会把正规产品页的「业绩比较基准：年化2.80%—3.20%」标成「收益承诺」——
+     * 而业绩比较基准恰恰是监管要求的合规写法，正规产品页因此被误判为高风险。
+     */
+    const term = compliantTermIn(quote);
+    if (term) {
+      dropped.push({ patternId, quote: label, reason: `引文包含合规术语「${term}」` });
       continue;
     }
 

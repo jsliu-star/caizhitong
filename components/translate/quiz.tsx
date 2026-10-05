@@ -10,6 +10,9 @@ import { Gauge, StatTile } from "@/components/viz";
 import type { Profile } from "@/lib/profile";
 import { TierBadge } from "./badge";
 import { award, CATEGORY_META, tierOf, TIERS, type QuizLevel } from "./state";
+import { Icon } from "@/components/ui/Icon";
+import { mascotSay, pick } from "@/components/assistant/lines";
+import { stageOf } from "@/lib/stage";
 
 const LEVELS = (quizData as { levels: QuizLevel[] }).levels;
 const QUIZ_TOTAL = LEVELS.reduce((s, l) => s + l.questions.reduce((t, q) => t + q.points, 0), 0);
@@ -50,6 +53,17 @@ export function Quiz({
   const [finished, setFinished] = useState(false);
 
   const active = useMemo(() => LEVELS.find((l) => l.id === activeId) ?? null, [activeId]);
+
+  // ?level=<关卡 id>：从档案页「推荐先学」直接进入某一关
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("level");
+    if (id && LEVELS.some((l) => l.id === id)) {
+      setActiveId(id);
+      setQIndex(0);
+      setPicks({});
+      setFinished(false);
+    }
+  }, []);
 
   // 词典「考我一下」→ 直接落到那一题
   useEffect(() => {
@@ -93,6 +107,11 @@ export function Quiz({
     });
     onProfile(p);
     setFinished(true);
+    mascotSay(
+      correctQs.length >= lv.passScore
+        ? { mood: "cheer", text: "过关啦！" }
+        : { mood: "happy", text: "差一点点，再来一次就过了。" },
+    );
   };
 
   // ── 结算 ──────────────────────────────────────────────
@@ -126,7 +145,7 @@ export function Quiz({
             <h3 className="text-[length:calc(15px*var(--fs))] font-bold text-brand-900">这几题再看一眼</h3>
             <ul className="mt-3 space-y-3">
               {wrongQs.map((q) => (
-                <li key={q.id} className="rounded-xl border border-line bg-paper p-4">
+                <li key={q.id} className="rounded-xl border border-line bg-paper shadow-card p-4">
                   <p className="text-[length:calc(14px*var(--fs))] font-semibold leading-relaxed text-ink">{q.stem}</p>
                   <p className="mt-2 text-[length:calc(14px*var(--fs))] font-medium leading-relaxed text-brand-800">
                     正确答案：{q.options.find((o) => o.correct)?.text}
@@ -147,7 +166,7 @@ export function Quiz({
           <button
             type="button"
             onClick={() => openLevel(active.id)}
-            className="rounded-xl bg-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900"
+            className="rounded-xl bg-brand-800 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900"
           >
             再来一次
           </button>
@@ -194,7 +213,7 @@ export function Quiz({
           />
         </div>
 
-        <section key={q.id} className="cd-in mt-5 rounded-2xl border border-line bg-paper p-5 sm:p-6">
+        <section key={q.id} className="cd-in mt-5 rounded-2xl border border-line bg-paper shadow-card p-5 sm:p-6">
           <p className="text-[length:calc(17px*var(--fs))] font-semibold leading-relaxed text-brand-950">{q.stem}</p>
 
           <ul className="mt-4 space-y-2.5">
@@ -211,20 +230,34 @@ export function Quiz({
                   <button
                     type="button"
                     disabled={answered}
-                    onClick={() => setPicks((p) => ({ ...p, [q.id]: o.id }))}
+                    onClick={() => {
+                      setPicks((p) => ({ ...p, [q.id]: o.id }));
+                      mascotSay(
+                        o.correct
+                          ? pick([
+                              { mood: "cheer", text: "答对了！" },
+                              { mood: "cheer", text: "漂亮，这个记住了。" },
+                              { mood: "wink", text: "这题难不倒你。" },
+                            ])
+                          : pick([
+                              { mood: "shy", text: "没关系，看看下面的解释。" },
+                              { mood: "shy", text: "这题容易错，看完解释就记住了。" },
+                            ]),
+                      );
+                    }}
                     className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition disabled:cursor-default ${cls}`}
                   >
                     <span
                       aria-hidden
                       className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[length:calc(13px*var(--fs))] font-bold ${
                         answered && o.correct
-                          ? "bg-risk-green text-white"
+                          ? "bg-risk-green text-on-brand"
                           : answered && chosen
-                            ? "bg-risk-red text-white"
+                            ? "bg-risk-red text-on-brand"
                             : "bg-brand-100 text-brand-800"
                       }`}
                     >
-                      {answered && o.correct ? "✓" : answered && chosen ? "✕" : o.id.toUpperCase()}
+                      {answered && o.correct ? <Icon name="check" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} /> : answered && chosen ? <Icon name="x" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} /> : o.id.toUpperCase()}
                     </span>
                     <span className="text-[length:calc(15px*var(--fs))] leading-relaxed text-ink">{o.text}</span>
                   </button>
@@ -254,7 +287,7 @@ export function Quiz({
             <button
               type="button"
               onClick={() => (isLast ? finish(active, picks) : setQIndex((i) => i + 1))}
-              className="mt-4 w-full rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 sm:w-auto"
+              className="mt-4 w-full rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900 sm:w-auto"
             >
               {isLast ? "看结果" : "下一题 →"}
             </button>
@@ -267,11 +300,16 @@ export function Quiz({
   // ── 关卡列表 ──────────────────────────────────────────
   const clearedCount = LEVELS.filter((l) => profile.knowledge.cleared.includes(l.id)).length;
   // 跳过已通关的：直接指向第一个没过的关卡，不重复考已经会的
-  const nextLevel = LEVELS.find((l) => !profile.knowledge.cleared.includes(l.id));
+  // 有人生阶段时，先推荐这个阶段最该学的那一关（还没通关的）；否则按顺序
+  const stage = stageOf(profile);
+  const stagePick = stage?.learn
+    .map((id) => LEVELS.find((l) => l.id === id))
+    .find((l) => l && !profile.knowledge.cleared.includes(l.id));
+  const nextLevel = stagePick ?? LEVELS.find((l) => !profile.knowledge.cleared.includes(l.id));
 
   return (
     <div>
-      <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
+      <section className="rounded-2xl border border-line bg-paper shadow-card p-5 sm:p-6">
         <h2 className="sr-only">我的学习档案</h2>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
@@ -316,7 +354,11 @@ export function Quiz({
         <div className="mt-5 flex flex-col gap-3 rounded-2xl border-2 border-brand-200 bg-brand-50 p-5 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             <p className="text-[length:calc(13px*var(--fs))] font-semibold tracking-wide text-brand-600">
-              {clearedCount > 0 ? `已通关 ${clearedCount} 关，跳过它们，从这里继续` : "从这一关开始"}
+              {stagePick && stage
+                ? `按你的人生阶段「${stage.label}」，推荐先闯这一关`
+                : clearedCount > 0
+                  ? `已通关 ${clearedCount} 关，跳过它们，从这里继续`
+                  : "从这一关开始"}
             </p>
             <p className="mt-1 text-[length:calc(17px*var(--fs))] font-bold text-brand-950">{nextLevel.name}</p>
             <p className="mt-0.5 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">{nextLevel.intro}</p>
@@ -324,7 +366,7 @@ export function Quiz({
           <button
             type="button"
             onClick={() => openLevel(nextLevel.id)}
-            className="shrink-0 rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900"
+            className="shrink-0 rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900"
           >
             {clearedCount > 0 ? "继续闯关" : "开始闯关"}
           </button>
@@ -359,7 +401,7 @@ export function Quiz({
                     done ? "bg-brand-800 text-brand-100" : "bg-brand-100 text-brand-800"
                   }`}
                 >
-                  {done ? "✓" : meta.label}
+                  {done ? <Icon name="check" className="h-5 w-5" strokeWidth={2.5} /> : meta.label}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[length:calc(16px*var(--fs))] font-bold text-brand-950">{lv.name}</span>

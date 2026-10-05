@@ -13,11 +13,13 @@ import {
 } from "@/lib/profile";
 import { buildLinkages, patternLabel, type Tab } from "./linkage";
 import { PageShell } from "@/components/ui/PageShell";
+import { StageJourney } from "@/components/stage/StageJourney";
+import { Mascot } from "@/components/assistant/Mascot";
 
 const KNOWLEDGE_LABEL = { none: "还没测出来", basic: "入门", intermediate: "进阶" } as const;
 
 const TAB_STYLE: Record<Tab, string> = {
-  安全盾: "bg-brand-800 text-white",
+  安全盾: "bg-brand-800 text-on-brand",
   翻译官: "bg-brand-100 text-brand-800",
   规划师: "bg-brand-50 text-brand-700 border border-brand-200",
   全站: "bg-risk-amber-bg text-risk-amber border border-risk-amber-line",
@@ -35,6 +37,7 @@ const pct = (x: number) => `${(x * 100).toFixed(2)}%`;
 function isEmptyProfile(p: Profile) {
   return (
     !p.ageBand &&
+    !p.lifeStage &&
     !p.riskType &&
     p.riskScore === undefined &&
     p.riskDims === undefined &&
@@ -82,7 +85,7 @@ function Skeleton() {
   return (
     <div className="mt-8 space-y-3" aria-hidden>
       {[64, 180, 120].map((h) => (
-        <div key={h} className="cd-pulse rounded-2xl border border-line bg-paper" style={{ height: h }} />
+        <div key={h} className="cd-pulse rounded-2xl border border-line bg-paper shadow-card" style={{ height: h }} />
       ))}
     </div>
   );
@@ -125,7 +128,7 @@ export default function ProfilePage() {
       </header>
 
       <section className="mt-5 rounded-xl bg-brand-900 px-5 py-4">
-        <p className="flex items-center gap-2 text-[length:calc(14px*var(--fs))] font-semibold text-white">
+        <p className="flex items-center gap-2 text-[length:calc(14px*var(--fs))] font-semibold text-on-brand">
           <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden fill="none" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2.8 20 5.6v6.1c0 4.6-3.2 8.6-8 10.1-4.8-1.5-8-5.5-8-10.1V5.6Z" stroke="currentColor" />
             <path d="M12 11v4.4M12 8.3h.01" stroke="currentColor" />
@@ -134,10 +137,25 @@ export default function ProfilePage() {
         </p>
       </section>
 
+      {profile !== null && (
+        <StageJourney
+          profile={profile}
+          onChange={(id) => setProfile(saveProfile({ lifeStage: id }))}
+        />
+      )}
+
       {profile !== null && empty && (
         <section className="mt-6">
-          <h2 className="text-[length:calc(18px*var(--fs))] font-bold text-brand-900">档案还是空的</h2>
-          
+          <div className="flex items-center gap-4 rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-paper p-4 shadow-card sm:p-5">
+            <Mascot mood="idle" follow size={76} className="shrink-0" />
+            <div>
+              <h2 className="text-[length:calc(18px*var(--fs))] font-bold text-brand-900">档案还是空的</h2>
+              <p className="mt-1 text-[length:calc(13.5px*var(--fs))] leading-relaxed text-ink-soft">
+                随便从下面哪一项开始，做完会自动记进来。三个智能体读的都是这一份。
+              </p>
+            </div>
+          </div>
+
           <ul className="mt-4 space-y-2.5">
             {[
               { href: "/plan", t: "去规划师做风险测评", d: "12 道自适应问题，测风险类型，并指出回答里的矛盾" },
@@ -146,7 +164,7 @@ export default function ProfilePage() {
               { href: "/translate", t: "去翻译官闯几关", d: "答错的术语会被记下来，之后讲到它会先解释" },
             ].map((x) => (
               <li key={x.t}>
-                <Link href={x.href} className="group block rounded-xl border border-line p-4 transition hover:border-brand-300 hover:bg-brand-50/60">
+                <Link href={x.href} className="cd-lift group block rounded-xl border border-line bg-paper p-4 shadow-card transition hover:border-brand-300">
                   <p className="text-[length:calc(14.5px*var(--fs))] font-semibold text-brand-800">
                     {x.t} <span className="inline-block transition group-hover:translate-x-0.5">→</span>
                   </p>
@@ -160,7 +178,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={loadDemo}
-              className="shrink-0 rounded-lg bg-brand-800 px-4 py-2 text-[length:calc(13.5px*var(--fs))] font-semibold text-white transition hover:bg-brand-900"
+              className="shrink-0 rounded-lg bg-brand-800 px-4 py-2 text-[length:calc(13.5px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900"
             >
               载入示例档案
             </button>
@@ -174,7 +192,7 @@ export default function ProfilePage() {
           <section data-outline="画像概览" className="mt-8">
             <h2 className="text-[length:calc(17px*var(--fs))] font-bold text-brand-900">画像概览</h2>
             {risk || profile.riskScore !== undefined ? (
-              <div className="mt-3 rounded-2xl border border-line bg-paper p-5">
+              <div className="mt-3 rounded-2xl border border-line bg-paper shadow-card p-5">
                 <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                   {profile.riskScore !== undefined && (
                     <Gauge
@@ -247,7 +265,7 @@ export default function ProfilePage() {
                 )}
               </div>
             ) : (
-              <p className="mt-3 rounded-2xl border border-line bg-paper p-5 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">
+              <p className="mt-3 rounded-2xl border border-line bg-paper shadow-card p-5 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">
                 还没有风险画像。
                 <Link href="/plan" className="ml-1 font-semibold text-brand-700 underline">
                   去规划师测一下 →
@@ -262,7 +280,7 @@ export default function ProfilePage() {
             <p className="mt-1.5 text-[length:calc(13.5px*var(--fs))] leading-relaxed text-ink-soft">
               
             </p>
-            <div className="mt-3 rounded-2xl border border-line bg-paper px-5 py-1">
+            <div className="mt-3 rounded-2xl border border-line bg-paper shadow-card px-5 py-1">
               <Field label="年龄段" value={profile.ageBand} todo={{ text: "还没测，去规划师", href: "/plan" }} />
               <Field
                 label="风险类型"
@@ -329,13 +347,13 @@ export default function ProfilePage() {
             
 
             {linkages.length === 0 ? (
-              <p className="mt-3 rounded-2xl border border-line bg-paper p-5 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">
+              <p className="mt-3 rounded-2xl border border-line bg-paper shadow-card p-5 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">
                 做一次测评或用一次识别，这里就有内容。
               </p>
             ) : (
               <ul className="mt-4 space-y-3">
                 {linkages.map((l) => (
-                  <li key={l.id} className="rounded-2xl border border-line bg-paper p-5">
+                  <li key={l.id} className="rounded-2xl border border-line bg-paper shadow-card p-5">
                     <div className="flex flex-wrap items-baseline gap-2">
                       <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[length:calc(11.5px*var(--fs))] font-semibold text-brand-600">
                         档案字段 {l.field}
@@ -381,7 +399,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={doClear}
-                  className="rounded-md bg-risk-red px-3 py-1 text-[length:calc(13px*var(--fs))] font-semibold text-white"
+                  className="rounded-md bg-risk-red px-3 py-1 text-[length:calc(13px*var(--fs))] font-semibold text-on-brand"
                 >
                   确定清除
                 </button>

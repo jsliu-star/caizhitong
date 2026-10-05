@@ -54,7 +54,7 @@ export default function LearnPage() {
           <h1 className="text-[length:calc(26px*var(--fs))] font-bold tracking-tight text-brand-950 sm:text-[length:calc(32px*var(--fs))]">学习</h1>
           <p className="mt-2 text-[length:calc(15px*var(--fs))] text-ink-soft">短平快搞懂金融常识，顺手学会识别骗局。</p>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-line bg-paper px-4 py-3">
+        <div className="flex items-center gap-3 rounded-xl border border-line bg-paper shadow-card px-4 py-3">
           <TierBadge index={index} size={44} />
           <div>
             <p className="text-[length:calc(14px*var(--fs))] font-semibold text-brand-900">{tier.name}</p>
@@ -74,7 +74,7 @@ export default function LearnPage() {
             type="button"
             onClick={() => setTab(t.id)}
             className={`min-h-10 rounded-xl px-4 py-2.5 text-left transition ${
-              tab === t.id ? "bg-brand-800 text-white" : "border border-line bg-paper text-brand-800 hover:bg-brand-50"
+              tab === t.id ? "bg-brand-800 text-on-brand" : "border border-line bg-paper text-brand-800 hover:bg-brand-50"
             }`}
           >
             <span className="block text-[length:calc(15px*var(--fs))] font-semibold">{t.label}</span>
@@ -83,7 +83,7 @@ export default function LearnPage() {
         ))}
         <Link
           href="/learn/cases"
-          className="min-h-10 rounded-xl border border-line bg-paper px-4 py-2.5 text-left transition hover:bg-brand-50"
+          className="min-h-10 rounded-xl border border-line bg-paper shadow-card px-4 py-2.5 text-left transition hover:bg-brand-50"
         >
           <span className="block text-[length:calc(15px*var(--fs))] font-semibold text-brand-800">骗局图鉴</span>
           <span className="block text-[length:calc(12px*var(--fs))] text-ink-mute">九类套路的推进剧本</span>

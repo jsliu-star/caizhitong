@@ -14,6 +14,10 @@
 import { RISK_META, type Profile } from "@/lib/profile";
 import { fmtPct } from "@/lib/finance";
 import { assessGoal } from "@/lib/plan/allocation";
+import { stageOf, type LifeStage } from "@/lib/stage";
+import casesData from "@/data/scam-cases.json";
+
+const CASE_NAME = new Map((casesData.cases as Array<{ id: string; name: string }>).map((c) => [c.id, c.name]));
 
 // ────────────────────────────────────────────────────────────
 // ① 意图闸门
@@ -110,9 +114,20 @@ export interface GateResult {
   reply?: { title: string; body: string; instead: string };
 }
 
+/**
+ * 「转述 + 求证」：用户在问别人说的话靠不靠谱，这是防骗问题，不是在向我们要收益承诺或买卖时点。
+ * 例：「群里有人说跟着老师炒股稳赚，靠谱吗？」——复赛个性化评测里发现它被「稳赚」误拦。
+ * 只豁免收益承诺 / 择时 / 代客三类；点评具体标的、要我们推荐买哪个，依然拦。
+ */
+const REPORTED = /(有人|他们|对方|群里|朋友|同事|亲戚|老师|客服|广告|宣传|销售|业务员|推销)[^。？?]{0,8}(说|讲|告诉|号称|声称|宣称|保证|承诺|推荐)|号称|声称|宣称|据说|听说/;
+const VERIFY = /(靠谱吗|靠不靠谱|是真的吗|真的假的|是不是骗|是骗局吗|是不是诈骗|可信吗|能信吗|有问题吗|正规吗|可靠吗|是真的|会不会是骗)/;
+const VERIFY_EXEMPT = new Set<BlockCategory>(["promise", "timing", "delegate"]);
+
 export function gateQuestion(question: string): GateResult {
   const q = question.replace(/\s/g, "");
+  const verifying = REPORTED.test(q) && VERIFY.test(q);
   for (const g of GATES) {
+    if (verifying && VERIFY_EXEMPT.has(g.category)) continue;
     const kw = g.keywords.find((k) => q.includes(k));
     if (kw) return { blocked: true, category: g.category, matched: kw, reply: BLOCK_REPLY[g.category] };
     const re = g.regex?.find((r) => r.test(q));
@@ -138,6 +153,16 @@ export interface Fact {
 
 export function profileFacts(p: Profile): Fact[] {
   const out: Fact[] = [];
+
+  const stage = stageOf(p);
+  if (stage) {
+    out.push({
+      key: "stage",
+      label: "人生阶段",
+      value: stage.label,
+      basis: "你在档案里自己选的",
+    });
+  }
 
   if (p.riskType) {
     const m = RISK_META[p.riskType];
@@ -353,22 +378,39 @@ export const TOPICS: Topic[] = [
   },
 ];
 
-export function matchTopics(question: string): Topic[] {
+export function matchTopics(question: string, stage?: LifeStage): Topic[] {
   const q = question.replace(/\s/g, "");
-  return TOPICS.filter((t) => t.keywords.some((k) => q.includes(k)));
+  const hit = TOPICS.filter((t) => t.keywords.some((k) => q.includes(k)));
+  if (!stage) return hit;
+  // 问题没匹配到主题时，用这个人生阶段最相关的主题兜底——同一句「我该怎么理财」，学生和临近退休的人该听到的不一样
+  if (hit.length === 0) return TOPICS.filter((t) => stage.planTopics.includes(t.id)).slice(0, 2);
+  return hit;
+}
+
+/** 人生阶段素材：这个阶段最该先做的事、最该防的骗局。作为模型可讲的要点 */
+export function stagePoints(stage: LifeStage): string[] {
+  return [
+    ...stage.focus.map((f) => `${f.title}：${f.why}`),
+    ...stage.guard.slice(0, 2).map((g) => `这个阶段要特别防「${CASE_NAME.get(g.caseId) ?? g.caseId}」：${g.why}`),
+  ];
 }
 
 // ────────────────────────────────────────────────────────────
 // 提示词与模板回答
 // ────────────────────────────────────────────────────────────
 
-export function buildPrompt(question: string, facts: Fact[], topics: Topic[]): string {
+export function buildPrompt(question: string, facts: Fact[], topics: Topic[], stage?: LifeStage): string {
   const factLines = facts.length
     ? facts.map((f) => `- ${f.label}：${f.value}（依据：${f.basis}）`).join("\n")
     : "（这位用户还没有填过档案）";
   const topicLines = topics.length
     ? topics.map((t) => `【${t.title}】\n${t.points.map((p) => `- ${p}`).join("\n")}`).join("\n\n")
     : "（没有匹配到具体主题，只能讲通用的思考顺序：钱的用途与期限 → 承受能力 → 先做确定的事）";
+  const stageLines = stage
+    ? `\n\n【这位用户的人生阶段：${stage.label}】（${stage.situation}）\n${stagePoints(stage)
+        .map((p) => `- ${p}`)
+        .join("\n")}`
+    : "";
 
   return `你是「财智通」的理财规划助手，正在回答一位金融小白的问题。你了解他的档案，所以回答要针对他的具体情况，而不是泛泛而谈。
 
@@ -379,22 +421,27 @@ ${question}
 ${factLines}
 
 【你可以讲的要点】（**这是你唯一的素材来源**，不要引入这里没有的知识）
-${topicLines}
+${topicLines}${stageLines}
 
 【硬性要求】
 1. 不推荐任何具体的股票、基金、理财产品，不提任何产品名称或代码，连举例都不行
 2. 不预测涨跌，不指导买卖时点，不承诺或暗示收益
 3. 不说任何产品或机构「安全」「可靠」「正规」
 4. 不要出现上面【用户事实】和【可讲要点】里没有的数字——一个都不许编
-5. 如果用户的情况里有更该先做的事（比如先还高息负债、先备应急金），先说那件事
+5. 如果用户的情况里有更该先做的事（比如先还高息负债、先备应急金），先说那件事；有人生阶段时，要结合这个阶段的处境来说，让他感觉这是说给他听的
 6. 讲还债省下的利息时，说「省下」「少付」，不要用「白赚」「稳赚」「划算得多」这类像在许诺收益的说法
 7. 用大白话，像耐心的晚辈跟长辈解释。3 到 6 句话，短句。不说教、不吓唬、不堆感叹号
-8. 直接输出正文，不要标题、不要列表、不要 markdown 符号`;
+8. 直接输出正文，不要标题、不要列表、不要 markdown 符号
+9. 年化利率就按「一年」说，不要换算成「每个月少付 X%」——同一个数字换了时间口径就是错的`;
 }
 
 /** 无 key（演示模式）或模型输出被审查层丢弃时的兜底回答：完全由规则拼出，可预测 */
-export function templateAnswer(facts: Fact[], topics: Topic[]): string {
+export function templateAnswer(facts: Fact[], topics: Topic[], stage?: LifeStage): string {
   const parts: string[] = [];
+
+  if (stage) {
+    parts.push(`你现在处在「${stage.label}」阶段，这个阶段最该先做的是：${stage.focus[0].title}——${stage.focus[0].why}`);
+  }
 
   const debt = facts.find((f) => f.key === "debt");
   const emergency = facts.find((f) => f.key === "emergency");
@@ -432,6 +479,8 @@ export function templateAnswer(facts: Fact[], topics: Topic[]): string {
 /** 按档案给出的推荐问法：让用户一眼看出「它真的读了我的档案」 */
 export function suggestedQuestions(p: Profile): string[] {
   const out: string[] = [];
+  const stage = stageOf(p);
+  if (stage) out.push(...stage.questions.slice(0, 2));
   if (typeof p.debtApr === "number" && p.debtApr > 0) out.push("我该先还债还是先理财？");
   if (typeof p.emergencyMonths === "number" && p.emergencyMonths < 3) out.push("应急金要留多少才够？");
   if (p.goals.length > 0) out.push(`我的目标「${p.goals[0].name}」现在这个进度够吗？`);
@@ -440,5 +489,5 @@ export function suggestedQuestions(p: Profile): string[] {
   if (p.encountered.length > 0) out.push("群里有人推荐产品，我该怎么判断？");
   out.push("我这种情况，钱该怎么分成几份？");
   out.push("理财和存款到底差在哪？");
-  return out.slice(0, 5);
+  return [...new Set(out)].slice(0, 5);
 }

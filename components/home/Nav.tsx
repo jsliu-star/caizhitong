@@ -122,7 +122,7 @@ export function Nav() {
       >
         <span
           aria-hidden
-          className="grid h-8 w-8 place-items-center rounded-lg bg-brand-800 text-[length:calc(15px*var(--fs))] font-bold text-brand-100"
+          className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-700 to-brand-900 text-[length:calc(15px*var(--fs))] font-bold text-brand-50 shadow-card ring-1 ring-brand-950/10"
         >
           财
         </span>
@@ -158,7 +158,7 @@ export function Nav() {
                   aria-current={active ? "page" : undefined}
                   className={`whitespace-nowrap rounded-full px-2 py-1.5 transition sm:pl-3 sm:pr-1 ${
                     active
-                      ? "bg-brand-100 font-semibold text-brand-900"
+                      ? "bg-brand-100 font-semibold text-brand-900 ring-1 ring-brand-200"
                       : "text-ink-soft hover:bg-brand-50 hover:text-brand-800"
                   }`}
                 >
@@ -190,7 +190,7 @@ export function Nav() {
                 <div
                   role="menu"
                   aria-label={n.label}
-                  className="cd-in absolute left-0 top-full z-50 mt-1 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-line bg-paper p-2 shadow-lg"
+                  className="cd-in absolute left-0 top-full z-50 mt-1 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-line bg-paper p-2 shadow-pop"
                 >
                   <p className="px-3 pb-2 pt-1.5 text-[length:calc(12.5px*var(--fs))] leading-relaxed text-ink-mute">
                     {n.blurb}

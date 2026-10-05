@@ -53,7 +53,7 @@ export function StockLookup() {
   const chg = q && q.price !== null && q.prevClose ? ((q.price - q.prevClose) / q.prevClose) * 100 : null;
 
   return (
-    <section className="rounded-2xl border border-line bg-paper p-5">
+    <section className="rounded-2xl border border-line bg-paper shadow-card p-5">
       <h3 className="text-[length:calc(16px*var(--fs))] font-semibold text-brand-900">个股公开数据</h3>
       <p className="mt-1.5 text-[length:calc(14px*var(--fs))] text-ink-soft">公开披露的数据，不含评价。</p>
 
@@ -74,7 +74,7 @@ export function StockLookup() {
         <button
           type="submit"
           disabled={loading || !/^\d{6}$/.test(code.trim())}
-          className="min-h-10 rounded-lg bg-brand-800 px-4 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 disabled:bg-brand-200"
+          className="min-h-10 rounded-lg bg-brand-800 px-4 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900 disabled:bg-brand-200"
         >
           {loading ? "查询中" : "查询"}
         </button>

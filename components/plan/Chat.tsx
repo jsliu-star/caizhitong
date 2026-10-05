@@ -12,6 +12,7 @@
 import { useEffect, useRef, useState } from "react";
 import { loadProfile, type Profile } from "@/lib/profile";
 import { suggestedQuestions, type Fact } from "@/lib/plan/advisor";
+import { isAbort, streamSSE } from "@/lib/sse";
 
 interface BlockReply {
   title: string;
@@ -56,8 +57,21 @@ export function Chat() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => setProfile(loadProfile()), []);
+
+  // ?q=<问题>：从档案页「可以问问规划师」点进来，自动问
+  const askedFromUrl = useRef(false);
+  useEffect(() => {
+    if (askedFromUrl.current || !profile) return;
+    const q0 = new URLSearchParams(window.location.search).get("q");
+    if (!q0) return;
+    askedFromUrl.current = true;
+    void ask(q0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [turns]);
@@ -72,27 +86,12 @@ export function Chat() {
     const patch = (p: Partial<Turn>) =>
       setTurns((t) => t.map((x) => (x.id === id ? { ...x, ...p } : x)));
 
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
-      const r = await fetch("/api/plan/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, profile: profile ?? loadProfile() }),
-      });
-      if (!r.ok || !r.body) throw new Error("请求失败");
-
-      const reader = r.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const chunks = buf.split("\n\n");
-        buf = chunks.pop() ?? "";
-        for (const c of chunks) {
-          const line = c.trim();
-          if (!line.startsWith("data:")) continue;
-          const ev = JSON.parse(line.slice(5).trim());
+      await streamSSE<any>("/api/plan/chat", { question, profile: profile ?? loadProfile() }, {
+        signal: ctrl.signal,
+        onEvent: (ev) => {
           if (ev.stage === "gate" && ev.blocked) {
             patch({ blocked: { category: ev.category, matched: ev.matched, reply: ev.reply }, stage: "done" });
           } else if (ev.stage === "facts") {
@@ -104,9 +103,10 @@ export function Chat() {
           } else if (ev.stage === "error") {
             patch({ error: ev.message, stage: "error" });
           }
-        }
-      }
+        },
+      });
     } catch (e) {
+      if (isAbort(e)) return;
       patch({ error: e instanceof Error ? e.message : "回答失败", stage: "error" });
     } finally {
       setBusy(false);
@@ -119,7 +119,7 @@ export function Chat() {
     (profile.riskType != null || profile.goals.length > 0 || profile.knowledge.points > 0);
 
   return (
-    <section aria-labelledby="chat-h" className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
+    <section aria-labelledby="chat-h" className="rounded-2xl border border-line bg-paper shadow-card p-5 sm:p-6">
       <h2 id="chat-h" className="text-[length:calc(18px*var(--fs))] font-bold text-brand-950">
         问问规划师
       </h2>
@@ -158,7 +158,7 @@ export function Chat() {
           {turns.map((t) => (
             <li key={t.id} className="space-y-2.5">
               {/* 提问 */}
-              <p className="ml-auto w-fit max-w-[85%] break-words rounded-2xl rounded-br-sm bg-brand-800 px-4 py-2.5 text-[length:calc(15px*var(--fs))] leading-relaxed text-white">
+              <p className="ml-auto w-fit max-w-[85%] break-words rounded-2xl rounded-br-sm bg-brand-800 px-4 py-2.5 text-[length:calc(15px*var(--fs))] leading-relaxed text-on-brand">
                 {t.question}
               </p>
 
@@ -272,7 +272,7 @@ export function Chat() {
         <button
           type="submit"
           disabled={busy || q.trim().length < 2}
-          className="min-h-11 shrink-0 rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:text-brand-700"
+          className="min-h-11 shrink-0 rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-brand-200 disabled:text-brand-700"
         >
           {busy ? "回答中…" : "问"}
         </button>

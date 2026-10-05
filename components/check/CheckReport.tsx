@@ -5,11 +5,12 @@ import { useState } from "react";
 import { Radar } from "@/components/viz";
 import type { Hit, Regulation, ShieldReport } from "@/lib/types";
 import type { PersonalNote } from "@/lib/shield/personalize";
+import { Icon } from "@/components/ui/Icon";
 
 const LEVEL = {
-  red: { label: "高风险", cls: "border-risk-red-line bg-risk-red-bg text-risk-red", dot: "bg-risk-red", icon: "!" },
-  yellow: { label: "需警惕", cls: "border-risk-amber-line bg-risk-amber-bg text-risk-amber", dot: "bg-risk-amber", icon: "?" },
-  green: { label: "未发现违规表述", cls: "border-risk-green-line bg-risk-green-bg text-risk-green", dot: "bg-risk-green", icon: "✓" },
+  red: { label: "高风险", cls: "border-risk-red-line bg-risk-red-bg text-risk-red", dot: "bg-risk-red", icon: "alert" },
+  yellow: { label: "需警惕", cls: "border-risk-amber-line bg-risk-amber-bg text-risk-amber", dot: "bg-risk-amber", icon: "help" },
+  green: { label: "未发现违规表述", cls: "border-risk-green-line bg-risk-green-bg text-risk-green", dot: "bg-risk-green", icon: "shieldCheck" },
 } as const;
 
 function Mark({ clause, matched }: { clause: string; matched: string }) {
@@ -42,17 +43,21 @@ function Fold({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <section className="rounded-xl border border-line bg-paper">
+    <section className="rounded-xl border border-line bg-paper shadow-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 rounded-xl px-5 py-4 text-left transition-colors hover:bg-brand-50/60"
       >
         <span className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">
           {title}
           {count !== undefined && <span className="ml-2 text-[length:calc(13px*var(--fs))] font-normal text-ink-mute">{count}</span>}
         </span>
-        <span className="text-[length:calc(13px*var(--fs))] text-brand-600">{open ? "收起" : "展开"}</span>
+        <span className="inline-flex items-center gap-1 text-[length:calc(13px*var(--fs))] font-medium text-brand-600">
+          {open ? "收起" : "展开"}
+          <Icon name="chevronDown" className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </span>
       </button>
       {open && <div className="border-t border-line px-5 py-4">{children}</div>}
     </section>
@@ -73,12 +78,19 @@ export function CheckReport({
   const groups = group(report.hits);
   const missing = report.elements.filter((e) => !e.present);
   const isRisk = report.mode === "risk";
+  const isReportGenre = report.genre?.kind === "report" && report.verdict.headline.includes("讲骗局");
 
   return (
     <div className="space-y-4">
+      {report.notice && (
+        <p className="flex items-start gap-2 rounded-xl border border-risk-amber-line bg-risk-amber-bg px-4 py-3 text-[length:calc(13.5px*var(--fs))] leading-relaxed text-risk-amber">
+          <Icon name="alert" className="mt-0.5 h-4 w-4" />
+          {report.notice}
+        </p>
+      )}
       {/* 人话版 */}
       {(report.plainText || (isRisk && report.verdict.summary)) && (
-        <section data-outline="人话版" className="rounded-2xl border-2 border-brand-200 bg-brand-50 p-5">
+        <section data-outline="人话版" className="cd-in rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-paper p-5 shadow-card sm:p-6">
           <p className="text-[length:calc(12px*var(--fs))] font-semibold tracking-widest text-brand-600">人话版</p>
           <p className="mt-2 text-[length:calc(16px*var(--fs))] leading-relaxed text-ink">
             {report.plainText || report.verdict.summary}
@@ -86,15 +98,39 @@ export function CheckReport({
         </section>
       )}
 
-      {/* 风险结论（只在体检模式） */}
-      {isRisk && (
-        <section data-outline="风险结论" className={`rounded-2xl border-2 p-5 ${lv.cls}`}>
+      {/* 讲骗局的文字（报道 / 警示 / 科普）：不给风险等级，换成这张卡（lib/rules/genre.ts） */}
+      {isRisk && isReportGenre && (
+        <section data-outline="风险结论" className="cd-in rounded-2xl border-2 border-brand-300 bg-brand-50 p-5 text-brand-900 shadow-card sm:p-6">
           <div className="flex items-center gap-3">
-            <span aria-hidden className={`grid h-9 w-9 place-items-center rounded-full text-[length:calc(18px*var(--fs))] font-bold text-white ${lv.dot}`}>
-              {lv.icon}
+            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-700 text-on-brand shadow-card ring-4 ring-paper/70">
+              <Icon name="book" className="h-5 w-5" strokeWidth={2} />
             </span>
             <div>
-              <p className="text-[length:calc(19px*var(--fs))] font-bold leading-tight">{lv.label}</p>
+              <p className="text-[length:calc(21px*var(--fs))] font-bold leading-tight">讲骗局的文字</p>
+              <p className="text-[length:calc(13px*var(--fs))] opacity-90">{report.verdict.headline}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">
+            判断依据：文中出现了{" "}
+            {[...(report.genre?.cues.narrative ?? []), ...(report.genre?.cues.tactic ?? []), ...(report.genre?.cues.warning ?? [])]
+              .slice(0, 5)
+              .map((c) => `「${c}」`)
+              .join("")}
+            {report.genre?.cues.quoted.length ? `，且「${report.genre.cues.quoted.slice(0, 3).join("」「")}」是被引号括起来引用的` : ""}
+            。下面列出的风险条目，就是它在讲的那些话术。
+          </p>
+        </section>
+      )}
+
+      {/* 风险结论（只在体检模式） */}
+      {isRisk && !isReportGenre && (
+        <section data-outline="风险结论" className={`cd-in rounded-2xl border-2 p-5 shadow-card sm:p-6 ${lv.cls}`}>
+          <div className="flex items-center gap-3">
+            <span aria-hidden className={`grid h-11 w-11 shrink-0 place-items-center rounded-full shadow-card ring-4 ring-paper/70 text-[length:calc(18px*var(--fs))] font-bold text-on-brand ${lv.dot}`}>
+              <Icon name={lv.icon} className="h-5 w-5" strokeWidth={2.25} />
+            </span>
+            <div>
+              <p className="text-[length:calc(21px*var(--fs))] font-bold leading-tight">{lv.label}</p>
               {report.verdict.headline && <p className="text-[length:calc(13px*var(--fs))] opacity-90">{report.verdict.headline}</p>}
             </div>
           </div>
@@ -112,7 +148,7 @@ export function CheckReport({
               const h = g[0];
               const laws = report.regulations.filter((r) => h.regulationIds.includes(r.id));
               return (
-                <li key={h.patternId} className="rounded-xl border border-line bg-paper p-4">
+                <li key={h.patternId} className="rounded-xl border border-line bg-paper shadow-card p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="grid h-5 w-5 place-items-center rounded bg-brand-800 text-[length:calc(12px*var(--fs))] font-bold text-brand-50">
                       {i + 1}
@@ -164,7 +200,7 @@ export function CheckReport({
 
       {/* 五维画像 */}
       {isRisk && report.hits.length > 0 && (
-        <section data-outline="在哪几路上做手脚" className="rounded-xl border border-line bg-paper p-5">
+        <section data-outline="在哪几路上做手脚" className="rounded-xl border border-line bg-paper shadow-card p-5">
           <h3 className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">在哪几路上做手脚</h3>
           <div className="mt-2 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
             <Radar
@@ -202,7 +238,7 @@ export function CheckReport({
           <ol className="mt-3 space-y-1.5">
             {report.playbook[0].playbook.map((s, i) => (
               <li key={i} className="flex gap-2.5 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink">
-                <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-risk-red text-[length:calc(11px*var(--fs))] font-bold text-white">
+                <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-risk-red text-[length:calc(11px*var(--fs))] font-bold text-on-brand">
                   {i + 1}
                 </span>
                 {s}
@@ -220,7 +256,7 @@ export function CheckReport({
 
       {/* 术语：默认只显示词，点开才展开（交互式） */}
       {report.terms.length > 0 && (
-        <section data-outline="原文术语" className="rounded-xl border border-line bg-paper p-5">
+        <section data-outline="原文术语" className="rounded-xl border border-line bg-paper shadow-card p-5">
           <h3 className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">
             原文里的术语 <span className="font-normal text-ink-mute">点一下看解释</span>
           </h3>
@@ -232,7 +268,7 @@ export function CheckReport({
                 onClick={() => setOpenTerm(openTerm === t.term ? null : t.term)}
                 className={`min-h-9 rounded-full border px-3 py-2 text-[length:calc(13px*var(--fs))] font-medium transition ${
                   openTerm === t.term
-                    ? "border-brand-600 bg-brand-800 text-white"
+                    ? "border-brand-600 bg-brand-800 text-on-brand"
                     : "border-brand-200 bg-paper text-brand-800 hover:bg-brand-50"
                 }`}
               >
@@ -257,12 +293,12 @@ export function CheckReport({
 
       {/* 关键点 */}
       {report.keyPoints.length > 0 && (
-        <section data-outline="最该注意的几点" className="rounded-xl border border-line bg-paper p-5">
+        <section data-outline="最该注意的几点" className="rounded-xl border border-line bg-paper shadow-card p-5">
           <h3 className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">最该注意的几点</h3>
           <ul className="mt-2.5 space-y-2">
             {report.keyPoints.map((k, i) => (
               <li key={k.id} className="flex gap-2.5 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink">
-                <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-700 text-[length:calc(11px*var(--fs))] font-bold text-white">
+                <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-700 text-[length:calc(11px*var(--fs))] font-bold text-on-brand">
                   {i + 1}
                 </span>
                 {k.text}
@@ -317,11 +353,11 @@ export function CheckReport({
       {/* 行动建议 */}
       {isRisk && report.verdict.actions.length > 0 && (
         <section data-outline="现在该做什么" className="rounded-2xl bg-brand-900 p-5 text-brand-50">
-          <h3 className="text-[length:calc(15px*var(--fs))] font-bold text-white">现在该做什么</h3>
+          <h3 className="text-[length:calc(15px*var(--fs))] font-bold text-on-brand">现在该做什么</h3>
           <ol className="mt-2.5 space-y-2">
             {report.verdict.actions.map((a, i) => (
               <li key={i} className="flex gap-2.5 text-[length:calc(14px*var(--fs))] leading-relaxed">
-                <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-700 text-[length:calc(11px*var(--fs))] font-bold text-white">
+                <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-700 text-[length:calc(11px*var(--fs))] font-bold text-on-brand">
                   {i + 1}
                 </span>
                 {a}
@@ -400,6 +436,13 @@ export function CheckReport({
           {report.text}
         </pre>
       </Fold>
+
+      {report.cache && (
+        <p className="text-[length:calc(12px*var(--fs))] leading-relaxed text-ink-mute">
+          这份结果生成于 {new Date(report.cache.generatedAt).toLocaleString("zh-CN", { hour12: false })}
+          {report.cache.source === "snapshot" ? "（演示案例的固定结果）" : ""}。同一段内容会给出同一个结论，不会因为多点几次而变。
+        </p>
+      )}
 
 
     </div>

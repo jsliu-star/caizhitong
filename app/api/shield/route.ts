@@ -1,14 +1,20 @@
 import regulationsData from "@/data/regulations.json";
 import { getProvider } from "@/lib/llm";
+import { mockProvider } from "@/lib/llm/providers/mock";
+import snapshotData from "@/data/demo-snapshots.json";
+import { LIMITS, checkRate, jsonError, readJsonBody, takeModelQuota } from "@/lib/server/limits";
+import { LRU } from "@/lib/server/cache";
+import { shieldKey } from "@/lib/server/shield-key";
 import { detectSemantic } from "@/lib/llm/semantic";
 import { checkElements, matchPatterns, riskLevel } from "@/lib/rules/match";
 import { checkEntity } from "@/lib/rules/entity";
+import { detectGenre } from "@/lib/rules/genre";
 import { buildRiskRadar } from "@/lib/rules/radar";
 import { matchPlaybook } from "@/lib/rules/playbook";
 import { buildFollowups } from "@/lib/rules/followup";
-import { guardOutput } from "@/lib/rules/guard";
+import { dropRedacted, guardOutput } from "@/lib/rules/guard";
 import { redact } from "@/lib/rules/redact";
-import { buildSummaryPrompt, buildVerdict } from "@/lib/report/summary-template";
+import { buildReportVerdict, buildSummaryPrompt, buildVerdict } from "@/lib/report/summary-template";
 import { findKeyPoints, findTerms } from "@/lib/rules/glossary";
 import { DISCLAIMER, type CheckMode, type Regulation, type ShieldEvent, type ShieldReport } from "@/lib/types";
 
@@ -17,6 +23,38 @@ export const dynamic = "force-dynamic";
 
 const REGULATIONS = regulationsData.items as Regulation[];
 const REG_MAP = new Map(REGULATIONS.map((r) => [r.id, r]));
+
+
+interface CachedRun {
+  events: ShieldEvent[];
+  generatedAt: string;
+}
+const MEM = new LRU<CachedRun>(300);
+const SNAP = snapshotData as { generatedAt: string | null; rulesTag: string | null; entries: Record<string, ShieldEvent[]> };
+
+
+/** 重放缓存的事件序列：保留逐步出现的观感，但不重新调用模型 */
+function replay(run: CachedRun, cache: NonNullable<ShieldReport["cache"]>): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      for (const e of run.events) {
+        const out = e.stage === "report" ? { ...e, report: { ...e.report, cache } } : e;
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(out)}\n\n`));
+        if (process.env.SHIELD_NO_BEAT !== "1") await sleep(e.stage === "verdict" && e.status === "delta" ? 6 : 45);
+      }
+      controller.close();
+    },
+  });
+  return new Response(stream, { headers: SSE_HEADERS });
+}
+
+const SSE_HEADERS = {
+  "Content-Type": "text/event-stream; charset=utf-8",
+  "Cache-Control": "no-cache, no-transform",
+  Connection: "keep-alive",
+  "X-Accel-Buffering": "no",
+};
 
 /** 阶段间的节奏停顿：让用户看清每一步在做什么，而不是一瞬间全部刷出 */
 const BEAT = { stage: 90, item: 70, maxItems: 10 };
@@ -30,7 +68,9 @@ const SEMANTIC_TIMEOUT_MS = 7000;
  */
 const SUMMARY_TIMEOUT_MS = 8000;
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 评测时设 SHIELD_NO_BEAT=1 跳过节奏停顿，测的是真实计算耗时（停顿时长另行统计） */
+const sleep = (ms: number) =>
+  process.env.SHIELD_NO_BEAT === "1" ? Promise.resolve() : new Promise((r) => setTimeout(r, ms));
 
 interface Body {
   kind?: "image" | "text";
@@ -38,6 +78,8 @@ interface Body {
   imageDataUrl?: string;
   /** translate=只翻译；risk=翻译 + 风险体检（默认） */
   mode?: CheckMode;
+  /** 首页演示案例的图片路径，用于命中预生成快照 */
+  sampleId?: string;
 }
 
 /** 只翻译模式的提示词：说清这段话在讲什么，不做任何评价 */
@@ -54,20 +96,49 @@ ${terms.length ? `\n【原文里出现的术语，词典已另行解释，你不
 4. 直接输出正文，不要标题、不要列表、不要 markdown`;
 
 export async function POST(req: Request) {
-  let body: Body;
-  try {
-    body = (await req.json()) as Body;
-  } catch {
-    return new Response(JSON.stringify({ error: "请求体解析失败" }), { status: 400 });
+  // ── 入口检查：限流 → 大小 → 格式 ─────────────────────
+  const rate = checkRate(req, "shield");
+  if (!rate.ok) return jsonError(rate.status, rate.message, { code: rate.code, retryAfter: rate.retryAfter });
+  const parsed = await readJsonBody<Body>(req);
+  if (!parsed.ok) return jsonError(parsed.status, parsed.message);
+  const body = parsed.body;
+  if ((body.text ?? "").length > LIMITS.textChars) {
+    return jsonError(413, `文字太长了，请控制在 ${LIMITS.textChars} 字以内，或分几段查。`);
   }
+  if (body.kind === "image" && !/^data:image\/(png|jpe?g|webp|gif);base64,/.test(body.imageDataUrl ?? "")) {
+    return jsonError(400, "只支持 PNG、JPG、WebP 格式的图片。");
+  }
+  if (body.sampleId && !/^\/demo\/[\w-]+\.(png|jpe?g)$/.test(body.sampleId)) delete body.sampleId;
+
+  const mode: CheckMode = body.mode === "translate" ? "translate" : "risk";
+
+  // ── 缓存：同一段内容给出同一结论 ─────────────────────
+  // sampleId 只用来查仓库里的快照（我们自己生成并提交的，外部无法改写）；
+  // 内存缓存一律按内容存取——否则有人带上「正规样本」的 id 传一张诈骗图，就能污染之后所有人看到的结果
+  const snapKey = body.sampleId ? shieldKey(body, mode) : null;
+  const key = shieldKey({ ...body, sampleId: undefined }, mode);
+  for (const k of [snapKey, key]) {
+    if (k && SNAP.entries[k] && SNAP.generatedAt) {
+      return replay({ events: SNAP.entries[k], generatedAt: SNAP.generatedAt }, { source: "snapshot", generatedAt: SNAP.generatedAt });
+    }
+  }
+  const hit = MEM.get(key);
+  if (hit) return replay(hit, { source: "memory", generatedAt: hit.generatedAt });
+
+  // ── 模型额度：用完则只用规则（判定不受影响），并明说 ─────
+  const realProvider = getProvider();
+  const quotaOk = realProvider.isMock ? true : takeModelQuota();
+  const provider = quotaOk ? realProvider : mockProvider;
+  const notice = quotaOk ? undefined : "今天的模型额度已用完，本次只用规则判定。风险等级与命中项不受影响，大白话总结改用模板。";
 
   const encoder = new TextEncoder();
-  const provider = getProvider();
-  const mode: CheckMode = body.mode === "translate" ? "translate" : "risk";
+  const events: ShieldEvent[] = [];
+  let cacheable = false;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (e: ShieldEvent) => {
+        events.push(e);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(e)}\n\n`));
       };
 
@@ -114,7 +185,8 @@ export async function POST(req: Request) {
                 new Promise<string>((r) => setTimeout(() => r(""), SUMMARY_TIMEOUT_MS)),
               ]);
               const g = guardOutput(raw.trim(), { sourceText: text });
-              if (!g.shouldFallback && g.text.length >= 20) plainText = g.text;
+              const shown = dropRedacted(g.text).text;
+              if (!g.shouldFallback && shown.length >= 20) plainText = shown;
             } catch {
               /* 降级为空，前端展示术语与关键点 */
             }
@@ -139,8 +211,10 @@ export async function POST(req: Request) {
             verdict: { level: "green", headline: "", summary: "", actions: [] },
             disclaimer: DISCLAIMER,
             demoMode: provider.isMock || !plainText,
+            ...(notice ? { notice } : {}),
             generatedAt: new Date().toISOString(),
           };
+          cacheable = !provider.isMock && Boolean(plainText);
           send({ stage: "verdict", status: "done", verdict: report.verdict });
           send({ stage: "report", status: "done", report });
           return;
@@ -188,8 +262,16 @@ export async function POST(req: Request) {
         const entity = checkEntity(text);
         const regIds = [...new Set(hits.flatMap((h) => h.regulationIds))];
         const regulations = regIds.map((id) => REG_MAP.get(id)).filter((r): r is Regulation => Boolean(r));
-        const { level, hardTypes, highTypes, escalated } = riskLevel(hits, elements, text);
-        const templateVerdict = buildVerdict({ level, hits, elements, entity, hardTypes, highTypes, escalated, text });
+        const ruleLevel = riskLevel(hits, elements, text);
+        const { hardTypes, highTypes, escalated } = ruleLevel;
+
+        // 文体：讲骗局（报道 / 警示 / 科普）时命中项照常列出，但结论不给「高风险」，也不让模型开口
+        const genre = detectGenre(text, hits);
+        const isReport = genre.kind === "report" && ruleLevel.level !== "green";
+        const level = isReport ? "yellow" : ruleLevel.level;
+        const templateVerdict = isReport
+          ? buildReportVerdict(hits, [...genre.cues.narrative, ...genre.cues.tactic, ...genre.cues.warning])
+          : buildVerdict({ level, hits, elements, entity, hardTypes, highTypes, escalated, text });
         const radar = buildRiskRadar(hits, elements, entity);
         const playbook = matchPlaybook(hits).map((m) => ({
           caseId: m.case.id,
@@ -224,7 +306,7 @@ export async function POST(req: Request) {
          * 措辞必须逐字可控。实测模型在这一档会自行写出
          * 「没有违反监管规定」「符合正规理财产品的基本要求」这类我们无权做的合规定性。
          */
-        const useModel = !provider.isMock && level !== "green";
+        const useModel = !provider.isMock && level !== "green" && !isReport;
 
         let summaryPromise: Promise<string> | null = null;
         const kickedOffAt = Date.now();
@@ -274,8 +356,10 @@ export async function POST(req: Request) {
             abandoned = true; // 超时：丢弃迟到的片段，用模板收尾
           } else if (raw.length >= 30) {
             const guarded = guardOutput(raw, { sourceText: `${text}\n${templateVerdict.summary}` });
-            if (!guarded.shouldFallback) {
-              summary = guarded.text;
+            // 改写过的整句去掉，而不是给用户看「（此处原有…已移除）」；剩得太少就回退模板
+            const shown = dropRedacted(guarded.text).text;
+            if (!guarded.shouldFallback && shown.length >= 30) {
+              summary = shown;
               usedModel = true;
             }
           }
@@ -302,25 +386,24 @@ export async function POST(req: Request) {
           entity,
           regulations,
           verdict,
+          genre,
           disclaimer: DISCLAIMER,
           demoMode: provider.isMock || !usedModel,
+          ...(notice ? { notice } : {}),
           generatedAt: new Date().toISOString(),
         };
         send({ stage: "report", status: "done", report });
+        // 只缓存完整、未降级的结果：语义通道超时或模型转述没被采纳的，不固定下来
+        cacheable = !provider.isMock && !semantic.note && (!useModel || usedModel);
       } catch (err) {
+        cacheable = false;
         send({ stage: "error", message: err instanceof Error ? err.message : "分析过程出错" });
       } finally {
+        if (cacheable) MEM.set(key, { events: [...events], generatedAt: new Date().toISOString() });
         controller.close();
       }
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    },
-  });
+  return new Response(stream, { headers: SSE_HEADERS });
 }

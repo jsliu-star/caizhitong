@@ -29,6 +29,31 @@ const OCR_PROMPT = `请把这张图片里的所有文字**原样**提取出来�
 3. 如果有联系方式、公司名称、编号，务必完整保留
 4. 除了图片里的文字，不要输出任何其他内容`;
 
+/**
+ * 调用记录：每次模型调用的模型名、token 用量与耗时。
+ * 只追加、不影响返回值；供复赛评测脚本统计实际费用与延迟（复赛工作区/评测/）。
+ * 线上进程里它会一直增长，所以设了上限，超出后丢弃最旧的记录。
+ */
+export interface UsageRecord {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  ms: number;
+  stream: boolean;
+}
+const USAGE: UsageRecord[] = [];
+const USAGE_CAP = 2000;
+function record(r: UsageRecord) {
+  USAGE.push(r);
+  if (USAGE.length > USAGE_CAP) USAGE.splice(0, USAGE.length - USAGE_CAP);
+}
+/** 取走并清空当前累计的调用记录 */
+export function drainUsage(): UsageRecord[] {
+  return USAGE.splice(0, USAGE.length);
+}
+
+type Usage = { prompt_tokens?: number; completion_tokens?: number };
+
 async function chat(
   model: string,
   messages: unknown[],
@@ -39,10 +64,18 @@ async function chat(
   if (!key) throw new Error("DASHSCOPE_API_KEY 未配置");
 
   const stream = Boolean(onDelta);
+  const t0 = Date.now();
   const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, messages, stream, temperature }),
+    // 流式时要求末尾附带 usage，否则拿不到 token 数
+    body: JSON.stringify({
+      model,
+      messages,
+      stream,
+      temperature,
+      ...(stream ? { stream_options: { include_usage: true } } : {}),
+    }),
   });
 
   if (!res.ok) {
@@ -50,7 +83,14 @@ async function chat(
   }
 
   if (!stream) {
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }>; usage?: Usage };
+    record({
+      model,
+      promptTokens: json.usage?.prompt_tokens ?? 0,
+      completionTokens: json.usage?.completion_tokens ?? 0,
+      ms: Date.now() - t0,
+      stream: false,
+    });
     return json.choices?.[0]?.message?.content ?? "";
   }
 
@@ -59,6 +99,7 @@ async function chat(
   const decoder = new TextDecoder();
   let buffer = "";
   let full = "";
+  let usage: Usage | undefined;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -71,7 +112,8 @@ async function chat(
       const payload = trimmed.slice(5).trim();
       if (payload === "[DONE]") continue;
       try {
-        const chunk = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> };
+        const chunk = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }>; usage?: Usage };
+        if (chunk.usage) usage = chunk.usage;
         const delta = chunk.choices?.[0]?.delta?.content;
         if (delta) {
           full += delta;
@@ -82,6 +124,13 @@ async function chat(
       }
     }
   }
+  record({
+    model,
+    promptTokens: usage?.prompt_tokens ?? 0,
+    completionTokens: usage?.completion_tokens ?? 0,
+    ms: Date.now() - t0,
+    stream: true,
+  });
   return full;
 }
 

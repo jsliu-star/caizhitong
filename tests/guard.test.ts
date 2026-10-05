@@ -1,4 +1,4 @@
-import { guardOutput } from "@/lib/rules/guard";
+import { dropRedacted, guardOutput } from "@/lib/rules/guard";
 
 let fail = 0;
 function check(name: string, input: string, opts: { mustNotContain?: string[]; fallback?: boolean; source?: string }) {
@@ -36,6 +36,20 @@ check("模型自己说「稳赚」→ 拦截", "这种做法基本是稳赚的�
 check("引用广告原文里的「稳赚不赔」→ 放行", "这份宣传里写着「稳赚不赔」，这是监管禁止的表述。", {
   mustNotContain: ["（此处原有收益承诺式表述"],
 });
+
+// 复赛个性化评测中发现：提醒句被改坏成「听着像（此处原有…已移除）」
+check("比喻提醒「听着像稳赚」→ 放行", "朋友说的分红项目，听着像稳赚，但得先看清楚收益是怎么来的。", {
+  mustNotContain: ["（此处原有收益承诺式表述"],
+});
+check("否定提醒「没有稳赚不赔」→ 放行", "股市有风险，没有稳赚不赔的事。", { mustNotContain: ["（此处原有收益承诺式表述"] });
+check("模型自己承诺「这个稳赚」→ 仍拦", "跟着做这个稳赚，放心。", { mustNotContain: ["这个稳赚"] });
+
+{
+  const r = dropRedacted(guardOutput("先还掉高息负债。这种做法基本是稳赚的。等应急金够了再说。").text);
+  const ok = r.dropped === 1 && !r.text.includes("此处原有") && r.text.includes("先还掉高息负债") && r.text.includes("等应急金够了再说");
+  if (!ok) fail += 1;
+  console.log(`  ${ok ? "✅" : "❌"} 给用户看的版本：整句去掉被改写的句子，其余保留${ok ? "" : `  → ${r.text}`}`);
+}
 
 console.log("\n=== 编造数字检测 ===");
 check(

@@ -64,7 +64,7 @@ export function MicroLessons({
 
       <ul className="mt-4 space-y-3">
         {shown.map((l) => (
-          <li key={l.patternId} className="rounded-xl border border-line bg-paper p-4">
+          <li key={l.patternId} className="rounded-xl border border-line bg-paper shadow-card p-4">
             <h3 className="text-[length:calc(15px*var(--fs))] font-bold text-brand-900">{l.title}</h3>
             <p className="mt-2 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink">{l.body}</p>
             <p className="mt-2.5 text-[length:calc(12px*var(--fs))] leading-relaxed text-ink-mute">

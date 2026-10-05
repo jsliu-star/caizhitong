@@ -13,6 +13,7 @@ import { StatTile } from "@/components/viz";
 import type { Profile } from "@/lib/profile";
 import { awardJudge } from "./state";
 import { JUDGE_PER_SEGMENT } from "./quiz";
+import { Icon } from "@/components/ui/Icon";
 
 interface JudgeItem {
   id: string;
@@ -36,9 +37,9 @@ interface JudgeResult {
 }
 
 const LEVEL_META: Record<Level, { dot: string; name: string; cls: string }> = {
-  red: { dot: "🔴", name: "高风险", cls: "text-risk-red" },
-  yellow: { dot: "🟠", name: "需警惕", cls: "text-risk-amber" },
-  green: { dot: "🟢", name: "未识别到违规表述特征", cls: "text-risk-green" },
+  red: { dot: "bg-risk-red", name: "高风险", cls: "text-risk-red" },
+  yellow: { dot: "bg-risk-amber", name: "需警惕", cls: "text-risk-amber" },
+  green: { dot: "bg-risk-green", name: "未识别到违规表述特征", cls: "text-risk-green" },
 };
 
 /** 引擎判定折算成「有问题 / 没问题」，才能和用户的二选一对齐 */
@@ -123,11 +124,11 @@ export function Judge({ profile, onProfile }: { profile: Profile; onProfile: (p:
                   <span className="text-[length:calc(15px*var(--fs))] font-bold text-brand-950">{r.label}</span>
                   <span
                     aria-hidden
-                    className={`ml-auto grid h-6 w-6 place-items-center rounded-full text-[length:calc(13px*var(--fs))] font-bold text-white ${
+                    className={`ml-auto grid h-6 w-6 place-items-center rounded-full text-[length:calc(13px*var(--fs))] font-bold text-on-brand ${
                       r.agree ? "bg-risk-green" : "bg-risk-amber"
                     }`}
                   >
-                    {r.agree ? "✓" : "✕"}
+                    {r.agree ? <Icon name="check" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} /> : <Icon name="x" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} />}
                   </span>
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -138,7 +139,7 @@ export function Judge({ profile, onProfile }: { profile: Profile; onProfile: (p:
                   <p className="rounded-xl border border-line bg-paper-soft p-3 text-[length:calc(14px*var(--fs))] text-ink">
                     <span className="text-ink-mute">财智通：</span>
                     <b className={`font-semibold ${m.cls}`}>
-                      {m.dot} {m.name}
+                      <span aria-hidden className={`mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle ${m.dot}`} />{m.name}
                     </b>
                   </p>
                 </div>
@@ -157,7 +158,7 @@ export function Judge({ profile, onProfile }: { profile: Profile; onProfile: (p:
         </ul>
 
         {/* 总结 */}
-        <section className="mt-5 rounded-2xl border border-line bg-paper p-5">
+        <section className="mt-5 rounded-2xl border border-line bg-paper shadow-card p-5">
           <h3 className="text-[length:calc(15px*var(--fs))] font-bold text-brand-900">这一场说明了什么</h3>
           {missed.length > 0 ? (
             <p className="mt-2 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink">
@@ -198,7 +199,7 @@ export function Judge({ profile, onProfile }: { profile: Profile; onProfile: (p:
   // ── 答题 ──────────────────────────────────────────────
   return (
     <div>
-      <section className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
+      <section className="rounded-2xl border border-line bg-paper shadow-card p-5 sm:p-6">
         <h2 className="text-[length:calc(18px*var(--fs))] font-bold text-brand-950">骗局识别测试 · 你 vs 财智通</h2>
         <p className="mt-2 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">
           5 段文案，先自己判，再和财智通的判定并排看。仿真文本，机构名虚构。
@@ -210,7 +211,7 @@ export function Judge({ profile, onProfile }: { profile: Profile; onProfile: (p:
 
       <ul className="mt-5 space-y-4">
         {ITEMS.map((it) => (
-          <li key={it.id} className="rounded-2xl border border-line bg-paper p-5">
+          <li key={it.id} className="rounded-2xl border border-line bg-paper shadow-card p-5">
             <p className="text-[length:calc(13px*var(--fs))] font-semibold tracking-wide text-brand-600">{it.label}</p>
             <p className="mt-2.5 whitespace-pre-wrap break-words rounded-xl border border-line bg-paper-soft p-4 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink">
               {it.text}
@@ -252,7 +253,7 @@ export function Judge({ profile, onProfile }: { profile: Profile; onProfile: (p:
           type="button"
           disabled={!allAnswered || loading}
           onClick={submit}
-          className="rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-white transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-brand-200"
+          className="rounded-xl bg-brand-800 px-5 py-3 text-[length:calc(15px*var(--fs))] font-semibold text-on-brand transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-brand-200"
         >
           {loading ? "财智通正在判定…" : "提交，看看财智通怎么判"}
         </button>

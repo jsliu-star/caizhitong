@@ -2,6 +2,7 @@
 
 import type { RiskType } from "@/lib/profile";
 import type { Answers } from "@/lib/plan/questions";
+import { Icon } from "@/components/ui/Icon";
 
 /**
  * 品类优先级。
@@ -70,7 +71,7 @@ export function Priority({ answers, riskType }: { answers: Answers; riskType: Ri
   const firstUncleared = STEPS.findIndex((s) => !s.cleared?.(answers));
 
   return (
-    <section className="rounded-2xl border border-line bg-paper p-5">
+    <section className="rounded-2xl border border-line bg-paper shadow-card p-5">
       <h3 className="text-[length:calc(16px*var(--fs))] font-semibold text-brand-900">先做什么，后做什么</h3>
       <p className="mt-1.5 text-[length:calc(14px*var(--fs))] text-ink-soft">前一步没做完，别做后一步。</p>
 
@@ -92,10 +93,10 @@ export function Priority({ answers, riskType }: { answers: Answers; riskType: Ri
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`grid h-6 w-6 place-items-center rounded-full text-[length:calc(12px*var(--fs))] font-bold ${
-                    done ? "bg-brand-700 text-white" : current ? "bg-brand-600 text-white" : "bg-paper-soft text-ink-mute"
+                    done ? "bg-brand-700 text-on-brand" : current ? "bg-brand-600 text-on-brand" : "bg-paper-soft text-ink-mute"
                   }`}
                 >
-                  {done ? "✓" : i + 1}
+                  {done ? <Icon name="check" className="h-[1.1em] w-[1.1em]" strokeWidth={2.5} /> : i + 1}
                 </span>
                 <span className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">{s.title}</span>
                 {done && <span className="text-[length:calc(12px*var(--fs))] font-medium text-brand-700">已完成</span>}

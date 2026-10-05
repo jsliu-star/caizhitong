@@ -178,7 +178,7 @@ export function Result({ answers, onRedo }: { answers: Answers; onRedo: () => vo
       </section>
 
       {/* ── 大类配置框架 ───────────────────────── */}
-      <section data-outline="配置思路" className="rounded-2xl border border-line bg-paper p-6">
+      <section data-outline="配置思路" className="rounded-2xl border border-line bg-paper shadow-card p-6">
         <h3 className="text-[length:calc(17px*var(--fs))] font-bold text-brand-900">大类资产配置思路参考</h3>
         
         <div className="mt-5">
@@ -224,18 +224,18 @@ export function Result({ answers, onRedo }: { answers: Answers; onRedo: () => vo
       {/* ── 定向陷阱提醒（三 Tab 联动）───────────── */}
       {traps.length > 0 && (
         <section data-outline="冲你来的骗局" className="rounded-2xl bg-brand-900 p-6 text-brand-50">
-          <h3 className="text-[length:calc(17px*var(--fs))] font-bold text-white">冲你来的 {traps.length} 类骗局</h3>
+          <h3 className="text-[length:calc(17px*var(--fs))] font-bold text-on-brand">冲你来的 {traps.length} 类骗局</h3>
           <ul className="mt-4 space-y-4">
             {traps.map((t) => (
               <li key={t.id} className="border-t border-brand-700 pt-4">
-                <p className="text-[length:calc(15px*var(--fs))] font-bold text-white">{t.title}</p>
+                <p className="text-[length:calc(15px*var(--fs))] font-bold text-on-brand">{t.title}</p>
                 <p className="mt-1.5 text-[length:calc(14px*var(--fs))] leading-relaxed text-brand-100">{t.detail}</p>
               </li>
             ))}
           </ul>
           <Link
             href="/shield"
-            className="mt-5 inline-block rounded-xl bg-brand-50 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-900 transition hover:bg-white"
+            className="mt-5 inline-block rounded-xl bg-brand-50 px-5 py-2.5 text-[length:calc(15px*var(--fs))] font-semibold text-brand-900 transition hover:bg-paper"
           >
             去安全盾体检一张广告 →
           </Link>

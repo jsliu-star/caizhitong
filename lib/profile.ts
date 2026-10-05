@@ -52,6 +52,11 @@ export interface Goal {
 export interface Profile {
   version: 1;
   ageBand?: AgeBand;
+  /**
+   * 人生阶段（lib/stage）。由用户自己选，不从年龄自动推断——
+   * 同样 30 岁，单身、刚有孩子、背着房贷，要防的和该先做的完全不同。
+   */
+  lifeStage?: import("@/lib/stage").LifeStageId;
   riskType?: RiskType;
   /** 测评原始分 0-100 */
   riskScore?: number;
