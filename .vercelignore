@@ -5,3 +5,13 @@ docs/
 tests/
 *.log
 .DS_Store
+
+# 复赛新增：比赛材料、队友工作区（含盲评答案对照）、技术题、参考资料、初赛提交材料、本地构建产物
+复赛选手材料包/
+复赛工作区/
+技术题/
+botool-开发流程参考/
+submission/
+.next/
+node_modules/
+*.tsbuildinfo
