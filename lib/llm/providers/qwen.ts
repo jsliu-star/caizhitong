@@ -21,6 +21,8 @@ const BASE_URL = process.env.DASHSCOPE_BASE_URL ?? "https://dashscope.aliyuncs.c
  */
 const VISION_MODEL = process.env.QWEN_VISION_MODEL ?? "qwen-vl-plus";
 const TEXT_MODEL = process.env.QWEN_TEXT_MODEL ?? "qwen-flash";
+/** 单次模型请求的硬超时（毫秒） */
+const REQUEST_TIMEOUT_MS = Number(process.env.MODEL_TIMEOUT_MS ?? 20000);
 
 const OCR_PROMPT = `请把这张图片里的所有文字**原样**提取出来，包括标题、正文、角标、小字、水印、二维码旁边的说明文字。
 要求：
@@ -65,22 +67,45 @@ async function chat(
 
   const stream = Boolean(onDelta);
   const t0 = Date.now();
-  const res = await fetch(`${BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    // 流式时要求末尾附带 usage，否则拿不到 token 数
-    body: JSON.stringify({
-      model,
-      messages,
-      stream,
-      temperature,
-      ...(stream ? { stream_options: { include_usage: true } } : {}),
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`模型调用失败 ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  // 请求级硬超时 + 一次重试。
+  // 为什么：复赛评测中网络卡住时，没有超时的截图识别一次等了 242 秒；也遇到过 TLS 握手中途被重置。
+  // 只重试网络错误与 5xx / 429；key 无效等 4xx 不重试（重试也没用）。
+  let res: Response | undefined;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2 && !res; attempt += 1) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const r = await fetch(`${BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        // 流式时要求末尾附带 usage，否则拿不到 token 数
+        body: JSON.stringify({
+          model,
+          messages,
+          stream,
+          temperature,
+          ...(stream ? { stream_options: { include_usage: true } } : {}),
+        }),
+        signal: ctrl.signal,
+      });
+      if (r.ok) {
+        res = r;
+      } else if ((r.status >= 500 || r.status === 429) && attempt === 0) {
+        lastErr = new Error(`模型调用失败 ${r.status}`);
+        await new Promise((ok) => setTimeout(ok, 400));
+      } else {
+        throw new Error(`模型调用失败 ${r.status}: ${(await r.text()).slice(0, 300)}`);
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith("模型调用失败")) throw e;
+      lastErr = ctrl.signal.aborted ? new Error(`模型调用超时（${REQUEST_TIMEOUT_MS / 1000} 秒）`) : e;
+      if (attempt === 0) await new Promise((ok) => setTimeout(ok, 400));
+    } finally {
+      clearTimeout(timer);
+    }
   }
+  if (!res) throw lastErr instanceof Error ? lastErr : new Error("模型调用失败");
 
   if (!stream) {
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }>; usage?: Usage };

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { fmtBig, fmtNum, fmtPct, type StockData } from "@/lib/stock";
+import { fmtBig, fmtNum, fmtPct } from "@/lib/stock-format";
+import type { StockData } from "@/lib/stock";
 
 /**
  * 个股公开信息整理。

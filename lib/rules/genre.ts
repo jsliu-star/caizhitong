@@ -61,18 +61,35 @@ function insideQuotes(text: string, index: number, len: number): boolean {
 
 const uniq = (xs: string[]) => [...new Set(xs)];
 
+/**
+ * 去掉成对引号里的内容，只留「说话人自己的话」。
+ * 反诈报道常原样引用骗子的广告（「名额仅剩」「今日截止」都在引号里），这些不该算报道者在推销。
+ */
+function outsideQuotes(text: string): string {
+  return text.replace(/[“「『"][^”」』"]{0,300}[”」』"]/g, "　");
+}
+
 export function detectGenre(text: string, hits: Hit[]): GenreResult {
-  const narrative = uniq(text.match(NARRATIVE) ?? []);
-  const tactic = uniq(text.match(TACTIC) ?? []);
-  const warning = uniq(text.match(WARNING) ?? []);
-  const veto = uniq(text.match(VETO) ?? []);
+  const outside = outsideQuotes(text);
+  // 叙述 / 手法 / 警示线索只认引号外的——引号里的是被引用的话
+  const narrative = uniq(outside.match(NARRATIVE) ?? []);
+  const tactic = uniq(outside.match(TACTIC) ?? []);
+  const warning = uniq(outside.match(WARNING) ?? []);
+  const vetoOutside = uniq(outside.match(VETO) ?? []);
+  const vetoAll = uniq(text.match(VETO) ?? []);
   const quoted = uniq(
     hits.filter((h) => h.index >= 0 && insideQuotes(text, h.index, h.matched.length)).map((h) => h.matched),
   );
   const cues = { narrative, tactic, warning, quoted };
 
-  if (veto.length > 0) return { kind: "promo", cues, veto };
+  // 推销痕迹出现在引号外：说话人自己在推销，一票否决
+  if (vetoOutside.length > 0) return { kind: "promo", cues, veto: vetoOutside };
 
-  const families = [narrative, tactic, warning, quoted].filter((x) => x.length > 0).length;
-  return { kind: families >= 2 ? "report" : "promo", cues, veto };
+  const own = [narrative, tactic, warning].filter((x) => x.length > 0).length;
+  // 推销痕迹只出现在引号里：是在引用别人的广告。此时要求引号外有更强的报道线索（引述本身不计），
+  // 防止骗子在自家广告外面套一句「警方提醒：」再把推销内容放进引号
+  if (vetoAll.length > 0) return { kind: own >= 2 ? "report" : "promo", cues, veto: own >= 2 ? [] : vetoAll };
+
+  const families = own + (quoted.length > 0 ? 1 : 0);
+  return { kind: families >= 2 ? "report" : "promo", cues, veto: [] };
 }

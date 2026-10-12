@@ -117,12 +117,14 @@ export async function POST(req: Request) {
   // 内存缓存一律按内容存取——否则有人带上「正规样本」的 id 传一张诈骗图，就能污染之后所有人看到的结果
   const snapKey = body.sampleId ? shieldKey(body, mode) : null;
   const key = shieldKey({ ...body, sampleId: undefined }, mode);
-  for (const k of [snapKey, key]) {
+  // 评测时设 SHIELD_NO_CACHE=1：每次都真实计算，测真实耗时与波动
+  const noCache = process.env.SHIELD_NO_CACHE === "1";
+  for (const k of noCache ? [] : [snapKey, key]) {
     if (k && SNAP.entries[k] && SNAP.generatedAt) {
       return replay({ events: SNAP.entries[k], generatedAt: SNAP.generatedAt }, { source: "snapshot", generatedAt: SNAP.generatedAt });
     }
   }
-  const hit = MEM.get(key);
+  const hit = noCache ? undefined : MEM.get(key);
   if (hit) return replay(hit, { source: "memory", generatedAt: hit.generatedAt });
 
   // ── 模型额度：用完则只用规则（判定不受影响），并明说 ─────
@@ -150,7 +152,11 @@ export async function POST(req: Request) {
 
         if (body.kind === "image") {
           if (!body.imageDataUrl) throw new Error("未收到图片数据");
-          const r = await provider.extractFromImage(body.imageDataUrl);
+          // 识别失败给人话，不把「模型调用失败 401: {...}」这种技术报错原样给用户
+          const r = await provider.extractFromImage(body.imageDataUrl).catch((e: unknown) => {
+            console.error("[shield] OCR failed:", e instanceof Error ? e.message : e);
+            throw new Error("截图识别暂时用不了。可以把截图里的文字直接粘贴进来，照样能查。");
+          });
           rawText = r.text;
           visionNote = r.note;
         } else {
@@ -306,7 +312,10 @@ export async function POST(req: Request) {
          * 措辞必须逐字可控。实测模型在这一档会自行写出
          * 「没有违反监管规定」「符合正规理财产品的基本要求」这类我们无权做的合规定性。
          */
-        const useModel = !provider.isMock && level !== "green" && !isReport;
+        // 语义通道已经超时或失败，说明模型那边大概率整体不可用——不再发起转述请求，直接用模板。
+        // 实测：模型挂起时，不加这一条要等 7 s（语义）+ 8 s（转述）= 15 s；加了之后约 7 s
+        const modelDown = Boolean(semantic.note && /超时|失败/.test(semantic.note));
+        const useModel = !provider.isMock && level !== "green" && !isReport && !modelDown;
 
         let summaryPromise: Promise<string> | null = null;
         const kickedOffAt = Date.now();
