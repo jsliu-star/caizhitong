@@ -102,7 +102,7 @@ export function buildReportVerdict(hits: Hit[], cues: string[]): Verdict {
     actions: [
       "记住这几种说法：在宣传里看到它们，先停下来，不急着决定",
       "如果是转给家里人看的，可以把下面的「风险条目」一起发过去，一条条讲清楚",
-      "遇到疑似诈骗拨 110，或拨打反诈专线 12381 咨询",
+      "遇到疑似诈骗可拨 96110 咨询；若已被骗或需要报警，请拨 110",
     ],
   };
 }
@@ -174,7 +174,7 @@ function buildActions(level: RiskLevel, hits: Hit[], entity: EntityCheck, text: 
     if (!sit.alreadyPaid && !sit.withdrawBlocked) {
       actions.push("若已经转账：立即拨打 110 报警，并保留聊天记录、转账凭证、宣传材料截图");
     }
-    actions.push("涉网络诈骗可拨打全国反诈专线 12381 咨询预警");
+    actions.push("遇到疑似网络诈骗可拨 96110 咨询；收到 12381 预警短信应提高警惕");
   } else {
     actions.push("即使本次未发现问题，购买前仍应索要产品说明书，确认风险等级与你的风险测评结果匹配");
   }

@@ -72,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </li>
                 <li className="flex items-center gap-2">
                   <Icon name="phone" className="h-4 w-4 text-brand-600" />
-                  反诈专线 <span className="font-semibold text-ink">12381</span>
+                  反诈咨询 <span className="font-semibold text-ink">96110</span>
                 </li>
               </ul>
             </div>
