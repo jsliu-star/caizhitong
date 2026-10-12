@@ -124,7 +124,7 @@ export default function ProfilePage() {
     <PageShell title="我的档案" py="py-10">
       <header>
         <h1 className="text-[length:calc(26px*var(--fs))] font-bold tracking-tight text-brand-950 sm:text-[length:calc(32px*var(--fs))]">我的档案</h1>
-        <p className="mt-2 text-[length:calc(15px*var(--fs))] text-ink-soft">三个智能体共用的一份记忆。</p>
+        <p className="mt-2 text-[length:calc(15px*var(--fs))] text-ink-soft">查看和管理你的测评、学习与规划记录。</p>
       </header>
 
       <section className="mt-5 rounded-xl bg-brand-900 px-5 py-4">
@@ -133,7 +133,7 @@ export default function ProfilePage() {
             <path d="M12 2.8 20 5.6v6.1c0 4.6-3.2 8.6-8 10.1-4.8-1.5-8-5.5-8-10.1V5.6Z" stroke="currentColor" />
             <path d="M12 11v4.4M12 8.3h.01" stroke="currentColor" />
           </svg>
-          只存在你自己的浏览器里，不上传
+          保存在此浏览器中；问答时会发送至服务端，用于生成回答
         </p>
       </section>
 

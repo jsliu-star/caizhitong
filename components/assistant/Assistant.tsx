@@ -399,7 +399,7 @@ export function Assistant() {
             role: "bot",
             mood: "happy",
             text: `记下了，你现在处在「${st.label}」阶段。以后我会按这个阶段来提醒你。`,
-            source: "已写进你的档案 · 只存在你自己的浏览器里，可在「我的档案」里改",
+            source: "已保存到浏览器档案，可在「我的档案」中修改",
           },
         ]);
       }
@@ -572,7 +572,7 @@ export function Assistant() {
                             title: `好，「${st.label}」`,
                             text: st.talk,
                             watch: `这个阶段最该先做的：${st.focus[0].title}。${st.focus[0].why}`,
-                            source: "已写进你的档案 · 只存在你自己的浏览器里，可在「我的档案」里改",
+                            source: "已保存到浏览器档案，可在「我的档案」中修改",
                           },
                         ]);
                       }}

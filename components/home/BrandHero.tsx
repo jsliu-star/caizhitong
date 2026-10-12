@@ -51,12 +51,12 @@ export function BrandHero() {
         财智通 · 金融安全智能体
       </p>
       <p className="mt-3 max-w-xl pr-16 text-[length:calc(22px*var(--fs))] sm:pr-0 font-bold leading-snug tracking-tight text-on-brand sm:text-[length:calc(28px*var(--fs))]">
-        让每个人都能读懂金融，
+        遇到拿不准的理财信息，
         <br className="hidden sm:block" />
-        守护每一分财富
+        先看看哪些地方要核实
       </p>
       <p className="mt-2 max-w-xl text-[length:calc(14px*var(--fs))] sm:pr-24 leading-relaxed text-brand-100">
-        只帮你看清对方到底说了什么。判定靠规则，模型只负责讲人话。
+        上传截图或粘贴文字，查看风险表述、对应法规和术语解释。
       </p>
 
       <ul className="mt-4 flex max-w-xl flex-wrap gap-2 sm:pr-40">

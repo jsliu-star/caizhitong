@@ -283,7 +283,7 @@ function DirectionCard({ d, muted }: { d: Direction; muted?: boolean }) {
             <b className="text-ink">风险来源</b>：{d.risk}
           </p>
           <p className="text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-soft">
-            <b className="text-ink">小白最常犯的错</b>：{d.mistake}
+            <b className="text-ink">常见误区</b>：{d.mistake}
           </p>
           <p className="rounded-lg bg-brand-50 p-3 text-[length:calc(13px*var(--fs))] leading-relaxed text-brand-800">
             该问自己：{d.ask}

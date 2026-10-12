@@ -65,7 +65,7 @@ const NAV: Array<{
     href: "/profile",
     label: "我的档案",
     short: "档案",
-    blurb: "三个智能体共用的一份记忆，只存在你自己浏览器里。",
+    blurb: "保存你的测评、学习和规划记录，供各功能使用。",
     items: [
       { to: "/profile#画像概览", label: "画像概览", hint: "风险类型、知识等级、遇到过的骗局" },
       { to: "/profile#三个-Tab-怎么用它", label: "三个 Tab 怎么用它", hint: "看清每一条信息被谁读了" },

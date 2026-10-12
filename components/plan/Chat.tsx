@@ -124,13 +124,13 @@ export function Chat() {
         问问规划师
       </h2>
       <p className="mt-2 text-[length:calc(14px*var(--fs))] leading-relaxed text-ink-soft">
-        它读得到你的档案，所以回答是针对你的情况说的，不是通用科普。
+        回答会参考你的档案。问答时，档案会发送至服务端，相关信息会提供给模型。
         每条回答上方会列出它用了你档案里的哪几条信息——你可以当场核对。
       </p>
       {!hasProfile && (
         <p className="mt-3 rounded-xl border border-dashed border-line bg-paper-soft p-3 text-[length:calc(13px*var(--fs))] leading-relaxed text-ink-mute">
           你的档案还是空的，现在只能给通用回答。做完下面的风险测评、或在
-          <b className="font-semibold text-ink-soft">我的档案</b>里点「载入示例档案」，再来问会明显不一样。
+          <b className="font-semibold text-ink-soft">我的档案</b>里点「载入示例档案」，再查看结合档案的回答。
         </p>
       )}
 
@@ -236,7 +236,7 @@ export function Chat() {
             {turns.length > 0
               ? "还可以问："
               : hasProfile
-                ? "按你的档案，这几个问题最值得先问："
+                ? "结合你的档案，可以从这些问题开始："
                 : "先从这几个问起："}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">

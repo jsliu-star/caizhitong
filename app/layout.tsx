@@ -8,7 +8,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "财智通 · 金融安全智能体",
-  description: "让每个人都能读懂金融，守护每一分财富。截图或文字丢进来，先翻成人话，再看有没有风险。",
+  description: "上传截图或粘贴金融营销文字，查看风险表述、法规依据和术语解释。",
 };
 
 export const viewport: Viewport = {
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 财智通
               </p>
               <p className="mt-2 text-[length:calc(13.5px*var(--fs))] leading-relaxed text-ink-soft">
-                让每个人都能读懂金融，守护每一分财富。
+                看懂金融营销材料，核对风险依据。
               </p>
               <p className="mt-3 text-[length:calc(12.5px*var(--fs))] leading-relaxed text-ink-mute">
                 投资者教育用途，不构成投资建议，不推荐具体产品。
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <nav aria-label="页脚导航">
-              <p className="text-[length:calc(13px*var(--fs))] font-semibold text-brand-900">三个智能体</p>
+              <p className="text-[length:calc(13px*var(--fs))] font-semibold text-brand-900">功能导航</p>
               <ul className="mt-2 space-y-1.5 text-[length:calc(13.5px*var(--fs))]">
                 {[
                   ["/", "识别与翻译"],
