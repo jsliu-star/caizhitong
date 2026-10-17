@@ -11,6 +11,7 @@ import { BrandHero } from "@/components/home/BrandHero";
 import { Progress, STAGES, type StageKey, type StageStatus } from "@/components/check/Progress";
 import { personalizeReport, type PersonalNote } from "@/lib/shield/personalize";
 import {
+  clearProfile,
   EMPTY_PROFILE,
   loadLargeText,
   loadProfile,
@@ -19,6 +20,7 @@ import {
   type Profile,
 } from "@/lib/profile";
 import { findTerms } from "@/lib/rules/glossary";
+import { getPersona, PERSONAS, type Persona } from "@/lib/shield/personas";
 import { HowItWorks, SampleCases, TermCards, TermChips, type SampleCard } from "@/components/home/Guide";
 import type { CheckMode, ShieldEvent, ShieldReport } from "@/lib/types";
 import { mascotSay } from "@/components/assistant/lines";
@@ -80,6 +82,8 @@ export default function CheckPage() {
   const [demoNote, setDemoNote] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const [notes, setNotes] = useState<PersonalNote[]>([]);
+  // ?as=student|retired：路演演示用，载入示例档案，并在定向提示上方给出「换一个人看」
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [analyzed, setAnalyzed] = useState("");
   const [supplements, setSupplements] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -88,11 +92,19 @@ export default function CheckPage() {
   useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const as = getPersona(params.get("as"));
+    if (as) {
+      // 整份替换，不与原档案合并——否则原档案里的目标、负债会混进示例人物
+      clearProfile();
+      saveProfile(as.profile);
+      setPersona(as);
+    }
     setProfile(loadProfile());
     document.body.dataset.large = loadLargeText() ? "1" : "0";
 
     // ?demo=<样本id|1> 自动跑一遍，用于分享深链与回归截图
-    const d = new URLSearchParams(window.location.search).get("demo");
+    const d = params.get("demo");
     if (!d) return;
     const sample = SAMPLES.find((x) => x.id === d) ?? SAMPLES[0];
     if (sample.image) void runSampleImage(sample.image);
@@ -256,6 +268,15 @@ export default function CheckPage() {
     },
     [],
   );
+
+  // 同一份报告换一个人看：只重算定向提示，不重新体检
+  const pickPersona = (p: Persona) => {
+    if (!report) return;
+    clearProfile();
+    setProfile(saveProfile(p.profile));
+    setPersona(p);
+    setNotes(personalizeReport(report, p.profile));
+  };
 
   const onFollowup = (append: string) => {
     if (!append) return;
@@ -427,7 +448,12 @@ export default function CheckPage() {
 
       {report && (
         <div className="mt-5">
-          <CheckReport report={report} notes={notes} onFollowup={onFollowup} />
+          <CheckReport
+            report={report}
+            notes={notes}
+            onFollowup={onFollowup}
+            notesHeader={persona && <PersonaSwitch active={persona.id} onPick={pickPersona} />}
+          />
         </div>
       )}
 
@@ -448,5 +474,29 @@ export default function CheckPage() {
         />
       </div>
     </PageShell>
+  );
+}
+
+function PersonaSwitch({ active, onPick }: { active: Persona["id"]; onPick: (p: Persona) => void }) {
+  return (
+    <div className="mt-2.5">
+      <p className="text-[length:calc(12px*var(--fs))] text-ink-mute">示例档案（虚构人物）。同一份内容，换一个人看：</p>
+      <div className="mt-1.5 flex flex-wrap gap-2">
+        {PERSONAS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onPick(p)}
+            aria-pressed={p.id === active}
+            className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+              p.id === active ? "border-brand-700 bg-brand-700 text-on-brand" : "border-line bg-paper text-ink hover:border-brand-400"
+            }`}
+          >
+            <span className="block text-[length:calc(14px*var(--fs))] font-semibold">{p.label}</span>
+            <span className={`block text-[length:calc(12px*var(--fs))] ${p.id === active ? "opacity-90" : "text-ink-mute"}`}>{p.desc}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

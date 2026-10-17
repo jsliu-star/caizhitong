@@ -42,7 +42,12 @@ export default function PlanPage() {
     }
     try {
       const raw = window.localStorage.getItem(ANSWERS_KEY);
-      if (raw) setAnswers(JSON.parse(raw) as Answers);
+      if (raw) {
+        const a = JSON.parse(raw) as Answers;
+        // 答卷单独存一份；档案被清空或被替换（如演示用的示例人物）后，旧答卷就和档案对不上了，丢掉它
+        if (loadProfile().riskType === scoreAnswers(a).riskType) setAnswers(a);
+        else window.localStorage.removeItem(ANSWERS_KEY);
+      }
     } catch {
       /* noop */
     }

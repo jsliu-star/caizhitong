@@ -12,6 +12,9 @@
  * 合规上和全站一致：判定归规则，模型只讲人话。小通不会说「这是诈骗」「这个产品安全」，
  * 只会说「命中 N 条监管明令禁止的表述特征」。
  *
+ * 语音对话：点麦克风说话 → /api/asr 转成文字 → 和打字一样走上面三条路（防线一道不少）→
+ * 用语音问的，回答自动读出来（浏览器自带语音合成，不调用模型）。每条回答也都能点喇叭重读。
+ *
  * 面板 Portal 到 body，fixed 定位——header 用了 backdrop-filter，
  * 放在里面 fixed 会相对 header 定位（botool 规范「弹出层必须 Portal」）。
  */
@@ -20,6 +23,8 @@ import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { Mascot, type MascotMood } from "@/components/assistant/Mascot";
 import { Icon } from "@/components/ui/Icon";
+import { SpeakButton } from "@/components/ui/SpeakButton";
+import { MicError, canRecord, speak, startRecording, stopSpeaking, type Recording } from "@/lib/speech";
 import { findTerms } from "@/lib/rules/glossary";
 import { analyzeText } from "@/lib/rules/match";
 import { detectGenre } from "@/lib/rules/genre";
@@ -164,6 +169,25 @@ function localReply(q: string): Msg | null {
       source: "本地术语表 · 不调用模型",
     };
   }
+
+  // 一句短话里带着违规话术（语音提问常见：「老师说保本保息，能买吗」）：先把话术点出来
+  if (bare.length >= 6) {
+    const r = analyzeText(q);
+    if (r.hits.length > 0 && detectGenre(q, r.hits).kind !== "report") {
+      const h = r.hits.find((x) => x.severity === "hard") ?? r.hits[0];
+      const others = [...new Set(r.hits.map((x) => x.type))].filter((t) => t !== h.type);
+      return {
+        id: nid(),
+        role: "bot",
+        tone: "worry",
+        title: `「${h.matched}」属于${h.severity === "hard" ? "监管明令禁止的表述" : "高风险诱导特征"}`,
+        text: `${h.plain}${others.length ? `\n你这句话里还提到了：${others.slice(0, 3).join("、")}。` : ""}`,
+        watch: "要不要参与，我不能替你决定，但正规机构不会这样宣传。把对方发来的原话完整贴给我，我帮你逐句对照法规。",
+        source: "规则比对 · 不调用模型",
+        action: { label: "去做完整体检", text: q },
+      };
+    }
+  }
   return null;
 }
 
@@ -221,18 +245,32 @@ export function Assistant() {
   const pokeIdx = useRef(0);
   /** 进行中的提问；关掉面板时取消 */
   const abortRef = useRef<AbortController | null>(null);
+  /** 语音：idle / 正在录 / 正在转文字 */
+  const [listen, setListen] = useState<"idle" | "rec" | "asr">("idle");
+  const [micOk, setMicOk] = useState(false);
+  const recRef = useRef<Recording | null>(null);
+  /** 这一问是用语音问的 → 回答出来后自动读。一打字就关掉 */
+  const voiceRef = useRef(false);
   useEffect(() => {
     if (open) return;
     abortRef.current?.abort();
     abortRef.current = null;
     setBusy(false);
+    recRef.current?.cancel();
+    recRef.current = null;
+    setListen("idle");
+    voiceRef.current = false;
+    stopSpeaking();
   }, [open]);
   /** 档案里的人生阶段。打开面板时读一次 */
   const [stage, setStage] = useState<LifeStage | undefined>(undefined);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    setMicOk(canRecord());
+  }, []);
 
   /** 冒一句话；同时把表情切过去 */
   const say = useCallback((line: Line, ms = BUBBLE_MS) => {
@@ -362,6 +400,13 @@ export function Assistant() {
     if (m && m.role === "bot" && m.id !== "intro") setReact(null);
   }, [msgs]);
 
+  // 用语音问的，回答自动读出来。读的就是气泡里显示的、已过审查层的那段字
+  useEffect(() => {
+    const m = msgs[msgs.length - 1];
+    if (!open || !voiceRef.current || !m || m.role !== "bot" || m.id === "intro") return;
+    speak([m.title, m.text, m.watch].filter(Boolean).join("。"), { id: m.id });
+  }, [msgs, open]);
+
   useEffect(() => {
     if (!open) return;
     setBubble(null);
@@ -434,6 +479,45 @@ export function Assistant() {
     [busy],
   );
 
+  const botSays = (text: string) =>
+    setMsgs((m) => [...m, { id: nid(), role: "bot", text, tone: "worry", mood: "worry" }]);
+
+  /** 结束录音 → 转文字 → 当作一句提问发出去 */
+  const finishVoice = async () => {
+    const r = recRef.current;
+    if (!r) return;
+    recRef.current = null;
+    setListen("asr");
+    try {
+      const audio = await r.stop();
+      const res = await fetch("/api/asr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
+      if (!res.ok || !j.text) throw new Error(j.error || "没听清，再说一遍？也可以直接打字。");
+      voiceRef.current = true;
+      setListen("idle");
+      void send(j.text);
+    } catch (e) {
+      setListen("idle");
+      botSays(e instanceof Error && e.message ? e.message : "没听清，再说一遍？也可以直接打字。");
+    }
+  };
+
+  const toggleVoice = async () => {
+    if (listen === "rec") return void finishVoice();
+    if (listen !== "idle" || busy) return;
+    stopSpeaking();
+    try {
+      recRef.current = await startRecording(() => void finishVoice());
+      setListen("rec");
+    } catch (e) {
+      botSays(e instanceof MicError ? e.message : "麦克风打不开，可以直接打字问我。");
+    }
+  };
+
   const handoff = (text: string) => {
     try {
       window.sessionStorage.setItem(PENDING_CHECK_KEY, text);
@@ -449,7 +533,7 @@ export function Assistant() {
   // 面板里的表情：临时反应 > 正在想 > 最后一条回答带的表情
   const chatMood: MascotMood =
     react ??
-    (busy
+    (listen === "rec" ? "look" : listen === "asr" || busy
       ? "think"
       : last?.role !== "bot"
         ? "idle"
@@ -521,8 +605,14 @@ export function Assistant() {
             <div className="min-w-0 flex-1">
               <p className="text-[length:calc(16px*var(--fs))] font-bold text-on-brand">小通</p>
               <p className="flex items-center gap-1.5 text-[length:calc(12px*var(--fs))] text-brand-100">
-                <span className={`h-2 w-2 rounded-full ${busy ? "cd-pulse bg-brand-200" : "bg-brand-300"}`} />
-                {busy ? "正在想…" : "在线 · 不推荐产品 · 不预测涨跌"}
+                <span className={`h-2 w-2 rounded-full ${busy || listen !== "idle" ? "cd-pulse bg-brand-200" : "bg-brand-300"}`} />
+                {listen === "rec"
+                  ? "正在听…说完点一下方块"
+                  : listen === "asr"
+                    ? "正在听写…"
+                    : busy
+                      ? "正在想…"
+                      : "在线 · 可以打字，也可以说话"}
               </p>
             </div>
             <button
@@ -608,22 +698,43 @@ export function Assistant() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              voiceRef.current = false;
               void send(q);
             }}
             className="flex items-end gap-2 border-t border-line bg-paper p-3"
           >
+            {micOk && (
+              <button
+                type="button"
+                onClick={() => void toggleVoice()}
+                disabled={busy || listen === "asr"}
+                aria-label={listen === "rec" ? "说完了，结束录音" : "按一下，用说的提问"}
+                title={listen === "rec" ? "说完了，点这里" : "用说的提问"}
+                className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  listen === "rec"
+                    ? "border-risk-red-line bg-risk-red-bg text-risk-red"
+                    : "border-brand-300 bg-paper text-brand-800 hover:bg-brand-50"
+                }`}
+              >
+                <Icon name={listen === "rec" ? "stop" : "mic"} className={`h-5 w-5 ${listen !== "idle" ? "cd-pulse" : ""}`} />
+              </button>
+            )}
             <textarea
               ref={inputRef}
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                voiceRef.current = false;
+                setQ(e.target.value);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                   e.preventDefault();
+                  voiceRef.current = false;
                   void send(q);
                 }
               }}
               rows={1}
-              placeholder="问一个词，或贴一段可疑的话"
+              placeholder={listen === "rec" ? "正在听，说完点左边的方块" : listen === "asr" ? "正在把你说的话变成文字…" : "问一个词，或贴一段可疑的话"}
               aria-label="输入问题"
               className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-line bg-paper-soft px-3.5 py-2.5 text-[length:calc(14.5px*var(--fs))] leading-snug text-ink outline-none transition placeholder:text-ink-mute/70 focus-visible:border-brand-500 focus-visible:bg-paper focus-visible:ring-2 focus-visible:ring-brand-200"
             />
@@ -719,12 +830,17 @@ function BotBubble({ m, onAction }: { m: Msg; onAction: (text: string) => void }
             {m.action.label}
           </button>
         )}
-        {m.source && (
-          <p className="mt-2 flex items-center gap-1 text-[length:calc(11.5px*var(--fs))] text-ink-mute">
-            <Icon name="check" className="h-3 w-3" strokeWidth={2.5} />
-            {m.source}
-          </p>
-        )}
+        <div className="mt-1.5 flex items-center justify-between gap-2">
+          {m.source ? (
+            <p className="flex items-center gap-1 text-[length:calc(11.5px*var(--fs))] text-ink-mute">
+              <Icon name="check" className="h-3 w-3" strokeWidth={2.5} />
+              {m.source}
+            </p>
+          ) : (
+            <span />
+          )}
+          <SpeakButton compact text={[m.title, m.text, m.watch].filter(Boolean).join("。")} className="-mr-1.5" />
+        </div>
       </div>
     </div>
   );

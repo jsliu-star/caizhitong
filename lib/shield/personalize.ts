@@ -92,9 +92,17 @@ export function personalizeReport(report: ShieldReport, profile: Profile): Perso
   // ③b 人生阶段 → 命中的话术正好是这个阶段要特别防的骗局
   const stage = stageOf(profile);
   if (stage && report.verdict.level !== "green") {
+    // 取与命中特征重合最多的那一类；并列时按阶段里列的先后
     const guarded = stage.guard
-      .map((g) => ({ g, c: CASES.find((c) => c.id === g.caseId) }))
-      .find(({ c }) => c && c.patternIds.some((id) => hitIds.has(id)));
+      .map((g) => {
+        const c = CASES.find((c) => c.id === g.caseId);
+        return { g, c, n: c ? c.patternIds.filter((id) => hitIds.has(id)).length : 0 };
+      })
+      .filter((x) => x.n > 0)
+      .reduce<{ g: (typeof stage.guard)[number]; c?: (typeof CASES)[number]; n: number } | undefined>(
+        (best, x) => (!best || x.n > best.n ? x : best),
+        undefined,
+      );
     if (guarded?.c) {
       const shared = guarded.c.patternIds.filter((id) => hitIds.has(id)).map((id) => `「${hitTypes.get(id)}」`);
       notes.push({

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Radar } from "@/components/viz";
 import type { Hit, Regulation, ShieldReport } from "@/lib/types";
 import type { PersonalNote } from "@/lib/shield/personalize";
 import { Icon } from "@/components/ui/Icon";
+import { SpeakButton } from "@/components/ui/SpeakButton";
+import { FamilyShare } from "@/components/check/FamilyShare";
 
 const LEVEL = {
   red: { label: "高风险", cls: "border-risk-red-line bg-risk-red-bg text-risk-red", dot: "bg-risk-red", icon: "alert" },
@@ -67,10 +69,13 @@ function Fold({
 export function CheckReport({
   report,
   notes = [],
+  notesHeader,
   onFollowup,
 }: {
   report: ShieldReport;
   notes?: PersonalNote[];
+  /** 定向提示上方的附加内容（演示时的「换一个人看」切换） */
+  notesHeader?: ReactNode;
   onFollowup?: (append: string) => void;
 }) {
   const [openTerm, setOpenTerm] = useState<string | null>(null);
@@ -79,6 +84,9 @@ export function CheckReport({
   const missing = report.elements.filter((e) => !e.present);
   const isRisk = report.mode === "risk";
   const isReportGenre = report.genre?.kind === "report" && report.verdict.headline.includes("讲骗局");
+  const plain = report.plainText || (isRisk ? report.verdict.summary : "");
+  // 朗读：体检模式先读结论，再读人话版
+  const spoken = isRisk ? `${isReportGenre ? "讲骗局的文字" : lv.label}。${report.verdict.headline}。${plain}` : plain;
 
   return (
     <div className="space-y-4">
@@ -89,12 +97,13 @@ export function CheckReport({
         </p>
       )}
       {/* 人话版 */}
-      {(report.plainText || (isRisk && report.verdict.summary)) && (
+      {plain && (
         <section data-outline="人话版" className="cd-in rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-paper p-5 shadow-card sm:p-6">
-          <p className="text-[length:calc(12px*var(--fs))] font-semibold tracking-widest text-brand-600">人话版</p>
-          <p className="mt-2 text-[length:calc(16px*var(--fs))] leading-relaxed text-ink">
-            {report.plainText || report.verdict.summary}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[length:calc(12px*var(--fs))] font-semibold tracking-widest text-brand-600">人话版</p>
+            <SpeakButton text={spoken} />
+          </div>
+          <p className="mt-2 text-[length:calc(16px*var(--fs))] leading-relaxed text-ink">{plain}</p>
         </section>
       )}
 
@@ -312,6 +321,7 @@ export function CheckReport({
       {notes.length > 0 && (
         <section data-outline="针对你的提示" className="rounded-xl border border-brand-300 bg-brand-50 p-5">
           <h3 className="text-[length:calc(15px*var(--fs))] font-semibold text-brand-900">针对你的提示</h3>
+          {notesHeader}
           <ul className="mt-2.5 space-y-2.5">
             {notes.map((n) => (
               <li key={n.id} className="rounded-lg bg-paper p-3">
@@ -366,6 +376,9 @@ export function CheckReport({
           </ol>
         </section>
       )}
+
+      {/* 发给家人（规则拼出的固定措辞，不调用模型） */}
+      {isRisk && <FamilyShare report={report} />}
 
       {/* 折叠区：法条原文（去重，只列一次）+ 主体核查 + 排除项 + 原文 */}
       {isRisk && report.regulations.length > 0 && (

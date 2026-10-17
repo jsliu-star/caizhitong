@@ -21,6 +21,15 @@ const BASE_URL = process.env.DASHSCOPE_BASE_URL ?? "https://dashscope.aliyuncs.c
  */
 const VISION_MODEL = process.env.QWEN_VISION_MODEL ?? "qwen-vl-plus";
 const TEXT_MODEL = process.env.QWEN_TEXT_MODEL ?? "qwen-flash";
+/** 语音识别：qwen3-asr-flash，实测 5 秒中文语音约 1.1 秒返回，数字自动转成阿拉伯数字（10/17） */
+const ASR_MODEL = process.env.QWEN_ASR_MODEL ?? "qwen3-asr-flash";
+const ASR_TIMEOUT_MS = Number(process.env.ASR_TIMEOUT_MS ?? 8000);
+/** 小通的声音。音色是产品形象的一部分，可用环境变量换 */
+const TTS_MODEL = process.env.QWEN_TTS_MODEL ?? "qwen3-tts-flash";
+const TTS_VOICE = process.env.QWEN_TTS_VOICE ?? "Cherry";
+const TTS_TIMEOUT_MS = Number(process.env.TTS_TIMEOUT_MS ?? 6000);
+/** 语音合成走 DashScope 原生接口（兼容模式没有它） */
+const NATIVE_BASE = BASE_URL.replace(/\/compatible-mode\/v1\/?$/, "/api/v1");
 /** 单次模型请求的硬超时（毫秒） */
 const REQUEST_TIMEOUT_MS = Number(process.env.MODEL_TIMEOUT_MS ?? 20000);
 
@@ -60,7 +69,9 @@ async function chat(
   model: string,
   messages: unknown[],
   onDelta?: (d: string) => void,
-  temperature = 0.3,
+  temperature: number | undefined = 0.3,
+  /** 附加到请求体的模型专属参数（如语音识别的 asr_options） */
+  extra?: Record<string, unknown>,
 ): Promise<string> {
   const key = process.env.DASHSCOPE_API_KEY;
   if (!key) throw new Error("DASHSCOPE_API_KEY 未配置");
@@ -86,6 +97,7 @@ async function chat(
           stream,
           temperature,
           ...(stream ? { stream_options: { include_usage: true } } : {}),
+          ...extra,
         }),
         signal: ctrl.signal,
       });
@@ -178,5 +190,53 @@ export const qwenProvider: LLMProvider = {
 
   async summarize(prompt: string, onDelta?: (d: string) => void, temperature?: number): Promise<string> {
     return chat(TEXT_MODEL, [{ role: "user", content: prompt }], onDelta, temperature);
+  },
+
+  async transcribe(audioDataUrl: string): Promise<string> {
+    // 语音是对话，等不起：8 秒没回来就让用户改打字，不走 20 秒 × 2 次的通用超时
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, no) => {
+      timer = setTimeout(() => no(new Error("语音识别超时")), ASR_TIMEOUT_MS);
+    });
+    try {
+      const text = await Promise.race([
+        chat(
+          ASR_MODEL,
+          [{ role: "user", content: [{ type: "input_audio", input_audio: { data: audioDataUrl } }] }],
+          undefined,
+          undefined,
+          { asr_options: { language: "zh", enable_itn: true } },
+        ),
+        timeout,
+      ]);
+      return text.trim();
+    } finally {
+      clearTimeout(timer);
+    }
+  },
+
+  async synthesize(text: string): Promise<Uint8Array> {
+    const key = process.env.DASHSCOPE_API_KEY;
+    if (!key) throw new Error("未配置 DASHSCOPE_API_KEY");
+    // 朗读也等不起：超时就让前端改用浏览器自带语音
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TTS_TIMEOUT_MS);
+    try {
+      const r = await fetch(`${NATIVE_BASE}/services/aigc/multimodal-generation/generation`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: TTS_MODEL, input: { text, voice: TTS_VOICE } }),
+        signal: ctrl.signal,
+      });
+      if (!r.ok) throw new Error(`语音合成 ${r.status}`);
+      const json = (await r.json()) as { output?: { audio?: { url?: string } } };
+      const url = json.output?.audio?.url;
+      if (!url) throw new Error("语音合成没有返回音频");
+      const a = await fetch(url, { signal: ctrl.signal });
+      if (!a.ok) throw new Error(`音频下载 ${a.status}`);
+      return new Uint8Array(await a.arrayBuffer());
+    } finally {
+      clearTimeout(timer);
+    }
   },
 };
